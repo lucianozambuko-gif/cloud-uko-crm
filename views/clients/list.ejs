@@ -1,0 +1,42 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <h1><%= archived ? 'Archived clients' : 'Clients' %></h1>
+  <div class="actions">
+    <a class="btn primary" href="/clients/new">New client</a>
+  </div>
+</div>
+
+<form method="get" action="/clients" class="search">
+  <% if (archived) { %><input type="hidden" name="archived" value="1"><% } %>
+  <input type="search" name="q" value="<%= q %>" placeholder="Search name, company, phone or email" aria-label="Search clients">
+  <button class="btn" type="submit">Search</button>
+</form>
+
+<section class="card">
+  <% if (!clients.length) { %>
+    <p class="muted">No clients found.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th class="num">Projects</th><th class="num">Billed</th><th class="num">Outstanding</th></tr></thead>
+      <tbody>
+      <% for (const c of clients) { %>
+        <tr>
+          <td><a href="/clients/<%= c.id %>"><%= c.name %></a><% if (c.company) { %><div class="muted small-text"><%= c.company %></div><% } %></td>
+          <td><% if (c.phone) { %><a href="tel:<%= c.phone.replace(/[^+\d]/g, '') %>"><%= c.phone %></a><% } %></td>
+          <td><% if (c.email) { %><a href="mailto:<%= c.email %>"><%= c.email %></a><% } %></td>
+          <td class="num"><%= c.project_count %></td>
+          <td class="num"><%= f.money(c.billed_cents) %></td>
+          <td class="num"><strong><%= f.money(c.billed_cents - c.paid_cents) %></strong></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+
+<p class="muted">
+  <% if (archived) { %><a href="/clients">Back to active clients</a><% } else { %><a href="/clients?archived=1">Show archived clients</a><% } %>
+</p>
+<%- include('../partials/foot') %>

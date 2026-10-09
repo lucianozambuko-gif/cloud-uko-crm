@@ -1,0 +1,16 @@
+node_modules/
+
+# Client data is personal information (POPIA) - never commit it
+data/
+*.db
+*.db-wal
+*.db-shm
+*.xlsx
+*.csv
+*.docx
+
+# Local installers and the stray empty clone of this repo
+*.exe
+/cloud-uko-crm/
+
+.env

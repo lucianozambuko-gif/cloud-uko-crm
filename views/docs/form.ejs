@@ -1,0 +1,66 @@
+<%- include('../partials/head') %>
+<%
+  const rows = values.rows.length ? values.rows : [{ description: '', quantity: '1', price: '' }];
+%>
+<div class="page-head"><h1><%= title %></h1></div>
+<form method="post" action="<%= action %>" class="card form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid">
+    <label>Client *
+      <select name="client_id" required>
+        <option value="">Choose a client</option>
+        <% for (const c of clients) { %>
+          <option value="<%= c.id %>" <%= c.id === values.client_id ? 'selected' : '' %>><%= c.name %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Project
+      <select name="project_id">
+        <option value="">None</option>
+        <% for (const p of projects) { %>
+          <option value="<%= p.id %>" <%= p.id === values.project_id ? 'selected' : '' %>><%= p.client_name %> / <%= p.name %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Date *
+      <input type="date" name="issue_date" value="<%= values.issue_date %>" required>
+    </label>
+    <label><%= isInvoice ? 'Due date' : 'Valid until' %> *
+      <input type="date" name="due_date" value="<%= values.due_date %>" required>
+    </label>
+  </div>
+
+  <h2>Line items</h2>
+  <div class="items" id="items">
+    <div class="item-row item-head" aria-hidden="true"><span>Description</span><span>Qty</span><span>Unit price (R)</span><span></span></div>
+    <% for (const r of rows) { %>
+      <div class="item-row">
+        <input type="text" name="item_description" value="<%= r.description %>" maxlength="300" placeholder="Description" aria-label="Description">
+        <input type="text" name="item_quantity" value="<%= r.quantity %>" inputmode="decimal" placeholder="Qty" aria-label="Quantity">
+        <input type="text" name="item_price" value="<%= r.price %>" inputmode="decimal" placeholder="0.00" aria-label="Unit price in rand">
+        <button class="btn small ghost remove-item" type="button" aria-label="Remove line">Remove</button>
+      </div>
+    <% } %>
+  </div>
+  <template id="item-template">
+    <div class="item-row">
+      <input type="text" name="item_description" maxlength="300" placeholder="Description" aria-label="Description">
+      <input type="text" name="item_quantity" value="1" inputmode="decimal" placeholder="Qty" aria-label="Quantity">
+      <input type="text" name="item_price" inputmode="decimal" placeholder="0.00" aria-label="Unit price in rand">
+      <button class="btn small ghost remove-item" type="button" aria-label="Remove line">Remove</button>
+    </div>
+  </template>
+  <p><button class="btn small" type="button" id="add-item">Add line</button></p>
+  <p class="muted small-text">
+    <% if (settings.vat_registered === '1') { %>Prices exclude VAT. VAT is added on the total.<% } else { %>No VAT is added (not VAT registered, see Settings).<% } %>
+  </p>
+
+  <label>Notes (printed on the <%= label.toLowerCase() %>)
+    <textarea name="notes" rows="3" maxlength="2000"><%= values.notes %></textarea>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">Save <%= label.toLowerCase() %></button>
+    <a class="btn ghost" href="<%= doc ? base + '/' + doc.id : base %>">Cancel</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>

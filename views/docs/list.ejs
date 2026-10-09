@@ -1,0 +1,49 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <h1><%= label %>s</h1>
+  <div class="actions">
+    <a class="btn primary" href="<%= base %>/new">New <%= label.toLowerCase() %></a>
+  </div>
+</div>
+
+<% if (isInvoice) { %>
+<div class="tabs">
+  <a href="/invoices" class="<%= show === 'open' ? 'active' : '' %>">Unpaid and drafts</a>
+  <a href="/invoices?show=all" class="<%= show === 'all' ? 'active' : '' %>">All</a>
+</div>
+<% } %>
+
+<section class="card">
+  <% if (!docs.length) { %>
+    <p class="muted">Nothing to show.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Number</th><th>Client</th><th>Date</th><th><%= isInvoice ? 'Due' : 'Valid until' %></th><th class="num">Total</th>
+          <% if (isInvoice) { %><th class="num">Paid</th><th class="num">Outstanding</th><% } %>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% for (const d of docs) { const s = f.docState(d); %>
+        <tr>
+          <td><a href="<%= base %>/<%= d.id %>"><%= d.number %></a></td>
+          <td><a href="/clients/<%= d.client_id %>"><%= d.client_name %></a><% if (d.project_name) { %><div class="muted small-text"><%= d.project_name %></div><% } %></td>
+          <td><%= f.fmtDate(d.issue_date) %></td>
+          <td><%= f.fmtDate(d.due_date) %></td>
+          <td class="num"><%= f.money(d.total_cents) %></td>
+          <% if (isInvoice) { %>
+            <td class="num"><%= f.money(d.paid_cents) %></td>
+            <td class="num"><strong><%= d.status === 'sent' ? f.money(d.total_cents - d.paid_cents) : '' %></strong></td>
+          <% } %>
+          <td><span class="badge <%= s.cls %>"><%= s.label %></span></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+<%- include('../partials/foot') %>

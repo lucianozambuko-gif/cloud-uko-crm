@@ -1,0 +1,95 @@
+<%- include('partials/head') %>
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <div class="actions">
+    <a class="btn" href="/clients/new">New client</a>
+    <a class="btn primary" href="/invoices/new">New invoice</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><span>Billed in <%= f.fmtMonth(today) %></span><strong><%= f.money(billed) %></strong></div>
+  <div class="stat"><span>Received in <%= f.fmtMonth(today) %></span><strong><%= f.money(received) %></strong></div>
+  <div class="stat"><span>Outstanding (all invoices)</span><strong><%= f.money(outstandingTotal) %></strong></div>
+  <div class="stat <%= overdueCount ? 'warn' : '' %>"><span>Overdue invoices</span><strong><%= overdueCount %></strong></div>
+</div>
+
+<section class="card">
+  <h2>Outstanding invoices</h2>
+  <% if (!outstanding.length) { %>
+    <p class="muted">Nothing outstanding.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Invoice</th><th>Client</th><th>Due</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Status</th></tr></thead>
+      <tbody>
+      <% for (const d of outstanding) { const s = f.docState(d); %>
+        <tr>
+          <td><a href="/invoices/<%= d.id %>"><%= d.number %></a></td>
+          <td><a href="/clients/<%= d.client_id %>"><%= d.client_name %></a></td>
+          <td><%= f.fmtDate(d.due_date) %></td>
+          <td class="num"><%= f.money(d.total_cents) %></td>
+          <td class="num"><%= f.money(d.paid_cents) %></td>
+          <td class="num"><strong><%= f.money(d.total_cents - d.paid_cents) %></strong></td>
+          <td><span class="badge <%= s.cls %>"><%= s.label %></span></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+
+<div class="two-col">
+  <section class="card">
+    <h2>Recurring billing due in the next 30 days</h2>
+    <% if (!recurring.length) { %>
+      <p class="muted">Nothing due.</p>
+    <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Client</th><th>Service</th><th>Next</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        <% for (const r of recurring) { %>
+          <tr>
+            <td><a href="/clients/<%= r.client_id %>"><%= r.client_name %></a></td>
+            <td><%= r.description %></td>
+            <td><%= f.fmtDate(r.next_date) %><% if (r.next_date <= today) { %> <span class="badge overdue">Due</span><% } %></td>
+            <td class="num"><%= f.money(r.amount_cents) %></td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+    <p><a href="/recurring">Go to recurring billing</a></p>
+    <% } %>
+  </section>
+
+  <section class="card">
+    <h2>Follow-up tasks</h2>
+    <% if (!tasks.length) { %>
+      <p class="muted">No open tasks.</p>
+    <% } else { %>
+    <ul class="tasks">
+      <% for (const t of tasks) { %>
+        <li>
+          <form method="post" action="/tasks/<%= t.id %>/toggle">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <input type="hidden" name="back" value="/">
+            <button class="check" type="submit" title="Mark as done" aria-label="Mark as done"></button>
+          </form>
+          <div>
+            <%= t.title %>
+            <div class="muted small-text">
+              <% if (t.client_name) { %><a href="/clients/<%= t.client_id %>"><%= t.client_name %></a><% } %>
+              <% if (t.due_date) { %><span class="<%= t.due_date < today ? 'late' : '' %>">Due <%= f.fmtDate(t.due_date) %></span><% } %>
+            </div>
+          </div>
+        </li>
+      <% } %>
+    </ul>
+    <% } %>
+    <p><a href="/tasks">All tasks</a></p>
+  </section>
+</div>
+<%- include('partials/foot') %>

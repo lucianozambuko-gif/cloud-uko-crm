@@ -1,0 +1,60 @@
+<%- include('../partials/head') %>
+<div class="page-head"><h1>Follow-up tasks</h1></div>
+
+<form method="post" action="/tasks" class="card inline-form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="text" name="title" placeholder="What needs following up?" maxlength="200" required aria-label="Task">
+  <select name="client_id" aria-label="Client">
+    <option value="">No client</option>
+    <% for (const c of clients) { %><option value="<%= c.id %>"><%= c.name %></option><% } %>
+  </select>
+  <input type="date" name="due_date" aria-label="Due date">
+  <button class="btn primary" type="submit">Add task</button>
+</form>
+
+<section class="card">
+  <h2>Open</h2>
+  <% if (!open.length) { %><p class="muted">No open tasks.</p><% } %>
+  <ul class="tasks">
+    <% for (const t of open) { %>
+      <li>
+        <form method="post" action="/tasks/<%= t.id %>/toggle">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <button class="check" type="submit" title="Mark as done" aria-label="Mark as done"></button>
+        </form>
+        <div class="grow">
+          <%= t.title %>
+          <div class="muted small-text">
+            <% if (t.client_name) { %><a href="/clients/<%= t.client_id %>"><%= t.client_name %></a><% } %>
+            <% if (t.due_date) { %><span class="<%= t.due_date < today ? 'late' : '' %>">Due <%= f.fmtDate(t.due_date) %></span><% } %>
+          </div>
+        </div>
+        <form method="post" action="/tasks/<%= t.id %>/delete">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <button class="btn small ghost" type="submit" data-confirm="Delete this task?">Delete</button>
+        </form>
+      </li>
+    <% } %>
+  </ul>
+</section>
+
+<% if (done.length) { %>
+<section class="card">
+  <h2>Recently done</h2>
+  <ul class="tasks">
+    <% for (const t of done) { %>
+      <li class="faded">
+        <form method="post" action="/tasks/<%= t.id %>/toggle">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <button class="check done" type="submit" title="Reopen" aria-label="Reopen task"></button>
+        </form>
+        <div class="grow">
+          <s><%= t.title %></s>
+          <% if (t.client_name) { %><div class="muted small-text"><%= t.client_name %></div><% } %>
+        </div>
+      </li>
+    <% } %>
+  </ul>
+</section>
+<% } %>
+<%- include('../partials/foot') %>

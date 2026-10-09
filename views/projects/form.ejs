@@ -1,0 +1,39 @@
+<%- include('../partials/head') %>
+<div class="page-head"><h1><%= title %></h1></div>
+<form method="post" action="<%= action %>" class="card form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid">
+    <label>Client *
+      <select name="client_id" required>
+        <option value="">Choose a client</option>
+        <% for (const c of clients) { %>
+          <option value="<%= c.id %>" <%= c.id === project.client_id ? 'selected' : '' %>><%= c.name %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Project name *
+      <input type="text" name="name" value="<%= project.name || '' %>" maxlength="120" required>
+    </label>
+    <label>Type
+      <input type="text" name="type" value="<%= project.type || '' %>" maxlength="60" placeholder="Website, POS, E-commerce ...">
+    </label>
+    <label>Status
+      <select name="status">
+        <% for (const s of statuses) { %>
+          <option value="<%= s %>" <%= s === project.status ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Website or domain
+      <input type="text" name="url" value="<%= project.url || '' %>" maxlength="200">
+    </label>
+  </div>
+  <label>Notes (hosting, database, logins location ...)
+    <textarea name="notes" rows="4"><%= project.notes || '' %></textarea>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">Save project</button>
+    <a class="btn ghost" href="<%= project.client_id ? '/clients/' + project.client_id : '/projects' %>">Cancel</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>

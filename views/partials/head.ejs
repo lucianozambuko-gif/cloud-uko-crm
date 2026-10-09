@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= title %> · <%= locals.settings ? settings.business_name : 'Cloud Uko' %> CRM</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<% if (locals.user) {
+  const links = [['/', 'Dashboard'], ['/clients', 'Clients'], ['/projects', 'Projects'], ['/tasks', 'Tasks'],
+    ['/quotes', 'Quotes'], ['/invoices', 'Invoices'], ['/recurring', 'Recurring'], ['/settings', 'Settings']];
+  const current = locals.path || '';
+%>
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/"><%= settings.business_name %> CRM</a>
+    <nav>
+      <% for (const [href, text] of links) { %>
+        <a href="<%= href %>" class="<%= (href === '/' ? current === '/' : current.startsWith(href)) ? 'active' : '' %>"><%= text %></a>
+      <% } %>
+    </nav>
+    <form method="post" action="/logout" class="logout">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button class="btn small ghost" type="submit">Sign out</button>
+    </form>
+  </div>
+</header>
+<% } %>
+<main class="wrap">
+<% if (locals.flash) { %><div class="flash <%= flash.type %>"><%= flash.msg %></div><% } %>
+<% if (locals.errors && errors.length) { %>
+  <ul class="errors">
+    <% for (const e of errors) { %><li><%= e %></li><% } %>
+  </ul>
+<% } %>

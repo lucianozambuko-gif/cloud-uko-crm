@@ -1,0 +1,50 @@
+<%- include('../partials/head') %>
+<div class="page-head"><h1><%= title %></h1></div>
+<form method="post" action="<%= action %>" class="card form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid">
+    <label>Client *
+      <select name="client_id" required>
+        <option value="">Choose a client</option>
+        <% for (const c of clients) { %>
+          <option value="<%= c.id %>" <%= c.id === rec.client_id ? 'selected' : '' %>><%= c.name %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Project
+      <select name="project_id">
+        <option value="">None</option>
+        <% for (const p of projects) { %>
+          <option value="<%= p.id %>" <%= p.id === rec.project_id ? 'selected' : '' %>><%= p.client_name %> / <%= p.name %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Description * (appears on the invoice)
+      <input type="text" name="description" value="<%= rec.description || '' %>" maxlength="200" placeholder="Hosting, Domain renewal ..." required>
+    </label>
+    <label>Amount (R) *
+      <input type="text" name="amount" value="<%= rec.amount || '' %>" inputmode="decimal" required>
+    </label>
+    <label>Bill every
+      <select name="interval">
+        <% for (const i of intervals) { %>
+          <option value="<%= i %>" <%= i === rec.interval ? 'selected' : '' %>><%= i === 'yearly' ? 'Year' : 'Month' %></option>
+        <% } %>
+      </select>
+    </label>
+    <label>Next billing date *
+      <input type="date" name="next_date" value="<%= rec.next_date || '' %>" required>
+    </label>
+  </div>
+  <label class="check-label">
+    <input type="checkbox" name="active" value="1" <%= rec.active ? 'checked' : '' %>> Active (untick to pause billing)
+  </label>
+  <label>Notes
+    <textarea name="notes" rows="3" maxlength="2000"><%= rec.notes || '' %></textarea>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">Save</button>
+    <a class="btn ghost" href="/recurring">Cancel</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>

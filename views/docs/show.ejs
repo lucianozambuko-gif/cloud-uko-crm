@@ -1,0 +1,153 @@
+<%- include('../partials/head') %>
+<%
+  const s = f.docState(doc);
+  const outstanding = doc.total_cents - doc.paid_cents;
+%>
+<div class="page-head">
+  <h1><%= doc.number %> <span class="badge <%= s.cls %>"><%= s.label %></span></h1>
+  <div class="actions">
+    <a class="btn" href="<%= base %>/<%= doc.id %>/pdf" target="_blank" rel="noopener">PDF</a>
+    <% if (editable) { %><a class="btn" href="<%= base %>/<%= doc.id %>/edit">Edit</a><% } %>
+    <% if (doc.status === 'draft') { %>
+      <form method="post" action="<%= base %>/<%= doc.id %>/status">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <input type="hidden" name="status" value="sent">
+        <button class="btn primary" type="submit">Mark as sent</button>
+      </form>
+    <% } %>
+    <% if (!isInvoice && doc.status !== 'accepted') { %>
+      <form method="post" action="/quotes/<%= doc.id %>/convert">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <button class="btn primary" type="submit" data-confirm="Mark this quote as accepted and create a draft invoice from it?">Accepted: create invoice</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<section class="card">
+  <dl class="details cols">
+    <dt>Client</dt><dd><a href="/clients/<%= doc.client_id %>"><%= doc.client_name %></a></dd>
+    <% if (doc.project_name) { %><dt>Project</dt><dd><%= doc.project_name %></dd><% } %>
+    <dt>Date</dt><dd><%= f.fmtDate(doc.issue_date) %></dd>
+    <dt><%= isInvoice ? 'Due' : 'Valid until' %></dt><dd><%= f.fmtDate(doc.due_date) %></dd>
+  </dl>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+      <tbody>
+      <% for (const it of items) { %>
+        <tr>
+          <td class="txt"><%= it.description %></td>
+          <td class="num"><%= it.quantity %></td>
+          <td class="num"><%= f.money(it.unit_cents) %></td>
+          <td class="num"><%= f.money(it.line_cents) %></td>
+        </tr>
+      <% } %>
+      </tbody>
+      <tfoot>
+        <% if (doc.vat_rate > 0) { %>
+          <tr><td colspan="3" class="num">Subtotal</td><td class="num"><%= f.money(doc.subtotal_cents) %></td></tr>
+          <tr><td colspan="3" class="num">VAT (<%= doc.vat_rate %>%)</td><td class="num"><%= f.money(doc.vat_cents) %></td></tr>
+        <% } %>
+        <tr><td colspan="3" class="num"><strong>Total</strong></td><td class="num"><strong><%= f.money(doc.total_cents) %></strong></td></tr>
+        <% if (isInvoice && doc.status === 'sent') { %>
+          <tr><td colspan="3" class="num">Paid</td><td class="num"><%= f.money(doc.paid_cents) %></td></tr>
+          <tr><td colspan="3" class="num"><strong>Outstanding</strong></td><td class="num"><strong><%= f.money(outstanding) %></strong></td></tr>
+        <% } %>
+      </tfoot>
+    </table>
+  </div>
+  <% if (doc.notes) { %><p class="pre"><span class="muted">Notes:</span> <%= doc.notes %></p><% } %>
+</section>
+
+<% if (isInvoice && doc.status === 'sent') { %>
+<section class="card">
+  <h2>Payments</h2>
+  <% if (!payments.length) { %>
+    <p class="muted">No payments recorded yet.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th><th></th></tr></thead>
+      <tbody>
+      <% for (const p of payments) { %>
+        <tr>
+          <td><%= f.fmtDate(p.paid_on) %></td>
+          <td><%= p.method %></td>
+          <td class="txt"><%= p.reference %></td>
+          <td class="num"><%= f.money(p.amount_cents) %></td>
+          <td class="num">
+            <form method="post" action="/invoices/<%= doc.id %>/payments/<%= p.id %>/delete">
+              <input type="hidden" name="_csrf" value="<%= csrf %>">
+              <button class="btn small ghost" type="submit" data-confirm="Remove this payment of <%= f.money(p.amount_cents) %>?">Remove</button>
+            </form>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+
+  <% if (outstanding > 0) { %>
+  <h3>Record a payment</h3>
+  <form method="post" action="/invoices/<%= doc.id %>/payments" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="grid">
+      <label>Amount (R) *
+        <input type="text" name="amount" value="<%= f.moneyInput(outstanding) %>" inputmode="decimal" required>
+      </label>
+      <label>Date received *
+        <input type="date" name="paid_on" value="<%= today %>" required>
+      </label>
+      <label>Method
+        <select name="method">
+          <% for (const m of methods) { %><option value="<%= m %>"><%= m %></option><% } %>
+        </select>
+      </label>
+      <label>Reference
+        <input type="text" name="reference" maxlength="100">
+      </label>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">Record payment</button></div>
+  </form>
+  <% } %>
+</section>
+<% } %>
+
+<div class="foot-action actions">
+  <% if (isInvoice && doc.status === 'sent' && doc.paid_cents === 0) { %>
+    <form method="post" action="<%= base %>/<%= doc.id %>/status">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="status" value="draft">
+      <button class="btn small ghost" type="submit">Back to draft</button>
+    </form>
+    <form method="post" action="<%= base %>/<%= doc.id %>/status">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="status" value="void">
+      <button class="btn small ghost" type="submit" data-confirm="Void <%= doc.number %>? It stays on record but no longer counts as billed.">Void invoice</button>
+    </form>
+  <% } %>
+  <% if (isInvoice && doc.status === 'void') { %>
+    <form method="post" action="<%= base %>/<%= doc.id %>/status">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="status" value="draft">
+      <button class="btn small ghost" type="submit">Reopen as draft</button>
+    </form>
+  <% } %>
+  <% if (!isInvoice && doc.status === 'sent') { %>
+    <form method="post" action="<%= base %>/<%= doc.id %>/status">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="status" value="declined">
+      <button class="btn small ghost" type="submit">Mark as declined</button>
+    </form>
+  <% } %>
+  <% if (doc.status === 'draft') { %>
+    <form method="post" action="<%= base %>/<%= doc.id %>/delete">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button class="btn small danger" type="submit" data-confirm="Delete draft <%= doc.number %>? This cannot be undone.">Delete draft</button>
+    </form>
+  <% } %>
+</div>
+<%- include('../partials/foot') %>

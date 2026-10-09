@@ -1,0 +1,151 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <h1><%= client.name %><% if (client.archived) { %> <span class="badge void">Archived</span><% } %></h1>
+  <div class="actions">
+    <a class="btn" href="/clients/<%= client.id %>/edit">Edit</a>
+    <a class="btn" href="/quotes/new?client_id=<%= client.id %>">New quote</a>
+    <a class="btn primary" href="/invoices/new?client_id=<%= client.id %>">New invoice</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><span>Billed</span><strong><%= f.money(billed) %></strong></div>
+  <div class="stat"><span>Paid</span><strong><%= f.money(paid) %></strong></div>
+  <div class="stat <%= billed - paid > 0 ? 'warn' : '' %>"><span>Outstanding</span><strong><%= f.money(billed - paid) %></strong></div>
+</div>
+
+<div class="two-col">
+  <section class="card">
+    <h2>Details</h2>
+    <dl class="details">
+      <% if (client.company) { %><dt>Company</dt><dd><%= client.company %></dd><% } %>
+      <dt>Phone</dt>
+      <dd><% if (client.phone) {
+        // wa.me needs the international number without "+"; assume South Africa for local 0... numbers.
+        const digits = client.phone.replace(/\D/g, '');
+        const wa = client.phone.trim().startsWith('+') ? digits : digits.replace(/^0/, '27'); %>
+        <a href="tel:<%= client.phone.replace(/[^+\d]/g, '') %>"><%= client.phone %></a> · <a href="https://wa.me/<%= wa %>" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <% } else { %><span class="muted">None</span><% } %></dd>
+      <dt>Email</dt>
+      <dd><% if (client.email) { %><a href="mailto:<%= client.email %>"><%= client.email %></a><% } else { %><span class="muted">None</span><% } %></dd>
+      <% if (client.vat_number) { %><dt>VAT number</dt><dd><%= client.vat_number %></dd><% } %>
+      <% if (client.address) { %><dt>Address</dt><dd class="pre"><%= client.address %></dd><% } %>
+      <% if (client.notes) { %><dt>Notes</dt><dd class="pre"><%= client.notes %></dd><% } %>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Follow-up tasks</h2>
+    <ul class="tasks">
+      <% for (const t of tasks) { %>
+        <li>
+          <form method="post" action="/tasks/<%= t.id %>/toggle">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <input type="hidden" name="back" value="/clients/<%= client.id %>">
+            <button class="check" type="submit" title="Mark as done" aria-label="Mark as done"></button>
+          </form>
+          <div>
+            <%= t.title %>
+            <% if (t.due_date) { %><div class="small-text <%= t.due_date < today ? 'late' : 'muted' %>">Due <%= f.fmtDate(t.due_date) %></div><% } %>
+          </div>
+        </li>
+      <% } %>
+    </ul>
+    <form method="post" action="/tasks" class="inline-form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="back" value="/clients/<%= client.id %>">
+      <input type="hidden" name="client_id" value="<%= client.id %>">
+      <input type="text" name="title" placeholder="Add a follow-up" maxlength="200" required aria-label="Task">
+      <input type="date" name="due_date" aria-label="Due date">
+      <button class="btn" type="submit">Add</button>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Projects</h2>
+    <a class="btn small" href="/projects/new?client_id=<%= client.id %>">Add project</a>
+  </div>
+  <% if (!projects.length) { %>
+    <p class="muted">No projects yet.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Project</th><th>Type</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+      <tbody>
+      <% for (const p of projects) { %>
+        <tr>
+          <td><%= p.name %><% if (p.url) { %><div class="muted small-text"><%= p.url %></div><% } %></td>
+          <td><%= p.type %></td>
+          <td><span class="badge <%= p.status %>"><%= p.status %></span></td>
+          <td class="pre"><%= p.notes %></td>
+          <td class="num"><a href="/projects/<%= p.id %>/edit">Edit</a></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Recurring billing</h2>
+    <a class="btn small" href="/recurring/new?client_id=<%= client.id %>">Add recurring service</a>
+  </div>
+  <% if (!recurring.length) { %>
+    <p class="muted">No recurring services.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Service</th><th>Every</th><th>Next bill</th><th class="num">Amount</th><th></th></tr></thead>
+      <tbody>
+      <% for (const r of recurring) { %>
+        <tr class="<%= r.active ? '' : 'faded' %>">
+          <td><%= r.description %><% if (!r.active) { %> <span class="badge void">Paused</span><% } %></td>
+          <td><%= r.interval === 'yearly' ? 'Year' : 'Month' %></td>
+          <td><%= f.fmtDate(r.next_date) %></td>
+          <td class="num"><%= f.money(r.amount_cents) %></td>
+          <td class="num"><a href="/recurring/<%= r.id %>/edit">Edit</a></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2>Quotes and invoices</h2>
+  <% if (!documents.length) { %>
+    <p class="muted">Nothing yet.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Number</th><th>Date</th><th>Project</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Status</th></tr></thead>
+      <tbody>
+      <% for (const d of documents) { const s = f.docState(d); const inv = d.kind === 'invoice'; %>
+        <tr>
+          <td><a href="/<%= inv ? 'invoices' : 'quotes' %>/<%= d.id %>"><%= d.number %></a></td>
+          <td><%= f.fmtDate(d.issue_date) %></td>
+          <td><%= d.project_name || '' %></td>
+          <td class="num"><%= f.money(d.total_cents) %></td>
+          <td class="num"><%= inv ? f.money(d.paid_cents) : '' %></td>
+          <td class="num"><%= inv && d.status === 'sent' ? f.money(d.total_cents - d.paid_cents) : '' %></td>
+          <td><span class="badge <%= s.cls %>"><%= s.label %></span></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+
+<form method="post" action="/clients/<%= client.id %>/archive" class="foot-action">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn ghost small" type="submit" data-confirm="<%= client.archived ? 'Restore this client?' : 'Archive this client? Their history is kept and you can restore them later.' %>">
+    <%= client.archived ? 'Restore client' : 'Archive client' %>
+  </button>
+</form>
+<%- include('../partials/foot') %>

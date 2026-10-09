@@ -1,0 +1,51 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <h1>Recurring billing</h1>
+  <div class="actions">
+    <a class="btn" href="/recurring/new">New recurring service</a>
+    <form method="post" action="/recurring/generate-due">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button class="btn primary" type="submit" <%= dueCount ? '' : 'disabled' %>>Create invoices for due (<%= dueCount %>)</button>
+    </form>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><span>Monthly recurring</span><strong><%= f.money(monthlyTotal) %></strong></div>
+  <div class="stat"><span>Yearly recurring</span><strong><%= f.money(yearlyTotal) %></strong></div>
+  <div class="stat <%= dueCount ? 'warn' : '' %>"><span>Due to invoice now</span><strong><%= dueCount %></strong></div>
+</div>
+
+<section class="card">
+  <% if (!services.length) { %>
+    <p class="muted">No recurring services yet.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Client</th><th>Service</th><th>Every</th><th>Next bill</th><th class="num">Amount</th><th></th></tr></thead>
+      <tbody>
+      <% for (const r of services) { %>
+        <tr class="<%= r.active ? '' : 'faded' %>">
+          <td><a href="/clients/<%= r.client_id %>"><%= r.client_name %></a><% if (r.project_name) { %><div class="muted small-text"><%= r.project_name %></div><% } %></td>
+          <td class="txt"><%= r.description %><% if (!r.active) { %> <span class="badge void">Paused</span><% } %></td>
+          <td><%= r.interval === 'yearly' ? 'Year' : 'Month' %></td>
+          <td><%= f.fmtDate(r.next_date) %><% if (r.active && r.next_date <= today) { %> <span class="badge overdue">Due</span><% } %></td>
+          <td class="num"><%= f.money(r.amount_cents) %></td>
+          <td class="num"><div class="row-actions">
+            <a href="/recurring/<%= r.id %>/edit">Edit</a>
+            <% if (r.active) { %>
+            <form method="post" action="/recurring/<%= r.id %>/generate">
+              <input type="hidden" name="_csrf" value="<%= csrf %>">
+              <button class="btn small" type="submit" data-confirm="Create a draft invoice for <%= f.fmtDate(r.next_date) %> and move the next bill date on?">Invoice now</button>
+            </form>
+            <% } %>
+          </div></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+<p class="muted small-text">Invoices are created as drafts so you can check them before marking them as sent.</p>
+<%- include('../partials/foot') %>

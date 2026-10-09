@@ -1,0 +1,39 @@
+<%- include('../partials/head') %>
+<div class="page-head">
+  <h1>Projects</h1>
+  <div class="actions">
+    <a class="btn primary" href="/projects/new">New project</a>
+  </div>
+</div>
+
+<div class="tabs">
+  <a href="/projects" class="<%= status === '' ? 'active' : '' %>">All</a>
+  <% for (const s of statuses) { %>
+    <a href="/projects?status=<%= s %>" class="<%= status === s ? 'active' : '' %>"><%= s.charAt(0).toUpperCase() + s.slice(1) %></a>
+  <% } %>
+</div>
+
+<section class="card">
+  <% if (!projects.length) { %>
+    <p class="muted">No projects found.</p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Project</th><th>Client</th><th>Type</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+      <tbody>
+      <% for (const p of projects) { %>
+        <tr>
+          <td><%= p.name %><% if (p.url) { %><div class="muted small-text"><%= p.url %></div><% } %></td>
+          <td><a href="/clients/<%= p.client_id %>"><%= p.client_name %></a></td>
+          <td><%= p.type %></td>
+          <td><span class="badge <%= p.status %>"><%= p.status %></span></td>
+          <td class="pre"><%= p.notes %></td>
+          <td class="num"><a href="/projects/<%= p.id %>/edit">Edit</a></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+<%- include('../partials/foot') %>

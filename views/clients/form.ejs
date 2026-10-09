@@ -1,0 +1,33 @@
+<%- include('../partials/head') %>
+<div class="page-head"><h1><%= title %></h1></div>
+<form method="post" action="<%= action %>" class="card form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid">
+    <label>Name *
+      <input type="text" name="name" value="<%= client.name || '' %>" maxlength="120" required>
+    </label>
+    <label>Company
+      <input type="text" name="company" value="<%= client.company || '' %>" maxlength="120">
+    </label>
+    <label>Phone
+      <input type="tel" name="phone" value="<%= client.phone || '' %>" maxlength="40" placeholder="+27 ...">
+    </label>
+    <label>Email
+      <input type="email" name="email" value="<%= client.email || '' %>" maxlength="160">
+    </label>
+    <label>VAT number
+      <input type="text" name="vat_number" value="<%= client.vat_number || '' %>" maxlength="30">
+    </label>
+  </div>
+  <label>Address (shown on quotes and invoices)
+    <textarea name="address" rows="3" maxlength="500"><%= client.address || '' %></textarea>
+  </label>
+  <label>Notes
+    <textarea name="notes" rows="4"><%= client.notes || '' %></textarea>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">Save client</button>
+    <a class="btn ghost" href="<%= client.id ? '/clients/' + client.id : '/clients' %>">Cancel</a>
+  </div>
+</form>
+<%- include('../partials/foot') %>
