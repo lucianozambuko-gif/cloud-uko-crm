@@ -128,6 +128,8 @@ async function main() {
       console.error(err.code === 'EADDRINUSE' ? `Port ${port} is already in use. Set PORT in .env or close the other program.` : err);
       process.exit(1);
     }
+    // Lets scripts/stop.ps1 find this server when it runs without a window.
+    fs.writeFileSync(path.join(dataDir, 'crm.pid'), String(process.pid));
     console.log(`Cloud Uko CRM running: http://localhost:${port}`);
     automate();
     if (host === '0.0.0.0') {

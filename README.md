@@ -14,12 +14,26 @@ npm install
 npm start
 ```
 
-Or double-click `start-crm.bat`. Then open <http://localhost:3000>.
+Then open <http://localhost:3000>.
 
 On the first visit you are asked to create your login (username and a password of at least 10 characters).
 After that the setup page is closed. Change the password under **Settings**.
 
-Keep the window open while you use the CRM; closing it stops the server.
+### Desktop app
+
+```
+powershell -ExecutionPolicy Bypass -File scripts\install-shortcut.ps1
+```
+
+This puts a **Cloud Uko CRM** icon on the Desktop and in the Start menu. Opening it starts the server in the
+background (no console window) if it is not already running, then opens the CRM in its own window.
+
+- Closing the window does not stop the server, so phone access and automation keep working until the PC
+  shuts down. To stop it, double-click `stop-crm.bat`.
+- The server's output goes to `data/crm.log` and `data/crm-error.log`.
+- Run the install command again if you move the project folder.
+
+`start-crm.bat` still works if you prefer a visible console window; closing that window stops the server.
 
 ## Settings to fill in before your first real invoice
 
