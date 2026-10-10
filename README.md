@@ -92,6 +92,11 @@ your own devices can join.
 3. On your phone, with Tailscale switched on, open `http://<that 100.x address>:3000`.
 4. The first time, Windows Firewall asks whether to allow Node.js. Allow it on private networks.
 
+To get an app icon on the phone: open the CRM in Chrome, tap the menu (three dots) and choose
+**Add to Home screen**. The icon is the Cloud UKO logo (from `public/manifest.webmanifest` and
+`public/icons/`). Because the address is plain `http`, it opens in Chrome with the address bar showing;
+a full-screen app window needs HTTPS (for example `tailscale serve`).
+
 The PC has to be on and the CRM running. Traffic between your devices is encrypted by Tailscale.
 On the same Wi-Fi you can also use the PC's local address, which is listed at startup too.
 
