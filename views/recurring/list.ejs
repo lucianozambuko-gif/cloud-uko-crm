@@ -47,5 +47,14 @@
   </div>
   <% } %>
 </section>
-<p class="muted small-text">Invoices are created as drafts so you can check them before marking them as sent.</p>
+<p class="muted small-text">
+  <% if (settings.auto_invoice_mode === 'off') { %>
+    Automatic invoicing is off: use the buttons above when a service is due.
+  <% } else if (settings.auto_invoice_mode === 'sent') { %>
+    Services are invoiced automatically on their billing date, and you get a task to send the invoice to the client.
+  <% } else { %>
+    Services are invoiced automatically on their billing date as drafts, and you get a task to check and send each one.
+  <% } %>
+  The buttons above still work if you want to invoice early. <a href="/settings#automation">Change this in Settings</a>
+</p>
 <%- include('../partials/foot') %>

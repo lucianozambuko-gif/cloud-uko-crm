@@ -69,7 +69,8 @@ router.get('/:id', async (req, res) => {
   const [projects, documents, tasks, recurring] = await Promise.all([
     all('SELECT * FROM projects WHERE client_id = ? ORDER BY status, name COLLATE NOCASE', [client.id]),
     all(`${DOC_SELECT} WHERE d.client_id = ? ORDER BY d.issue_date DESC, d.number DESC`, [client.id]),
-    all('SELECT * FROM tasks WHERE client_id = ? AND done_at IS NULL ORDER BY due_date IS NULL, due_date, id', [client.id]),
+    all(`SELECT t.*, d.number AS doc_number, d.kind AS doc_kind FROM tasks t LEFT JOIN documents d ON d.id = t.document_id
+         WHERE t.client_id = ? AND t.done_at IS NULL ORDER BY t.due_date IS NULL, t.due_date, t.id`, [client.id]),
     all('SELECT * FROM recurring WHERE client_id = ? ORDER BY active DESC, next_date', [client.id]),
   ]);
   const sent = documents.filter((d) => d.kind === 'invoice' && d.status === 'sent');

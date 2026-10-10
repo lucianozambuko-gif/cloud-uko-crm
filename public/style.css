@@ -91,6 +91,8 @@ tfoot tr:first-child td { border-top: 2px solid var(--line); padding-top: 10px; 
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn.primary:hover { background: var(--accent-dark); }
 .btn.danger { color: var(--bad); border-color: #f1b5b0; }
+.btn.wa { background: #128c4b; border-color: #128c4b; color: #fff; }
+.btn.wa:hover { background: #0f7540; }
 .btn.ghost { background: transparent; }
 .btn.small { padding: 5px 10px; font-size: 0.85rem; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -142,6 +144,11 @@ textarea { resize: vertical; }
 .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 .tabs a { padding: 6px 12px; border-radius: 999px; background: #e8ecf1; color: var(--text); font-size: 0.9rem; }
 .tabs a.active { background: var(--navy); color: #fff; }
+
+.log { list-style: none; margin: 0 0 12px; padding: 0; }
+.log li { padding: 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.log li:last-child { border-bottom: 0; }
+.log li > span { margin-right: 8px; white-space: nowrap; }
 
 .tasks { list-style: none; margin: 0 0 12px; padding: 0; }
 .tasks li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }

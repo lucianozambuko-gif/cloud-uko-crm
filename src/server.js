@@ -9,6 +9,8 @@ const { migrate, get, dataDir } = require('./db');
 const { loadSettings } = require('./lib/settings');
 const { DbSessionStore, DEFAULT_TTL } = require('./lib/session-store');
 const fmt = require('./lib/format');
+const whatsapp = require('./lib/whatsapp');
+const { runAutomation } = require('./services/automation');
 const auth = require('./routes/auth');
 
 function sessionSecret() {
@@ -59,6 +61,7 @@ async function main() {
     if (!req.session.csrf) req.session.csrf = crypto.randomBytes(24).toString('hex');
     res.locals.csrf = req.session.csrf;
     res.locals.f = fmt;
+    res.locals.wa = whatsapp;
     res.locals.path = req.path;
     res.locals.user = null;
     res.locals.errors = [];
@@ -111,6 +114,12 @@ async function main() {
   await store.prune();
   setInterval(() => store.prune().catch((err) => console.error('Session prune failed', err)), 6 * 60 * 60 * 1000).unref();
 
+  // Automation runs at startup (to catch up on anything missed while the PC was off) and then every hour.
+  const automate = () => runAutomation()
+    .then(({ actions }) => { for (const a of actions) console.log('[automation] ' + a); })
+    .catch((err) => console.error('[automation] failed:', err));
+  setInterval(automate, 60 * 60 * 1000).unref();
+
   const port = Number(process.env.PORT) || 3000;
   const host = process.env.HOST || '0.0.0.0';
   // Express 5 also calls this callback with the error when listening fails.
@@ -120,6 +129,7 @@ async function main() {
       process.exit(1);
     }
     console.log(`Cloud Uko CRM running: http://localhost:${port}`);
+    automate();
     if (host === '0.0.0.0') {
       for (const [name, addrs] of Object.entries(os.networkInterfaces())) {
         for (const a of addrs || []) {

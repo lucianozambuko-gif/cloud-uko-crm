@@ -59,6 +59,46 @@
   <label>Footer text (printed at the bottom of quotes and invoices)
     <textarea name="document_footer" rows="2" maxlength="1000"><%= values.document_footer %></textarea>
   </label>
+
+  <h2 id="automation">Automation</h2>
+  <p class="muted small-text">Checks run when the CRM starts and every hour while it is open. Enter 0 days to switch a rule off.</p>
+  <div class="grid">
+    <label>Recurring services on their billing date
+      <select name="auto_invoice_mode">
+        <option value="draft" <%= values.auto_invoice_mode === 'draft' ? 'selected' : '' %>>Create a draft invoice for me to check</option>
+        <option value="sent" <%= values.auto_invoice_mode === 'sent' ? 'selected' : '' %>>Create the invoice as sent straight away</option>
+        <option value="off" <%= values.auto_invoice_mode === 'off' ? 'selected' : '' %>>Do nothing (I use the buttons)</option>
+      </select>
+    </label>
+    <label>Remind me this many days before a yearly renewal
+      <input type="text" name="renewal_reminder_days" value="<%= values.renewal_reminder_days %>" inputmode="numeric" required>
+    </label>
+    <label>Remind me to chase an overdue invoice every (days)
+      <input type="text" name="overdue_followup_days" value="<%= values.overdue_followup_days %>" inputmode="numeric" required>
+    </label>
+    <label>Remind me to follow up a sent quote after (days)
+      <input type="text" name="quote_followup_days" value="<%= values.quote_followup_days %>" inputmode="numeric" required>
+    </label>
+  </div>
+
+  <h2>WhatsApp messages</h2>
+  <p class="muted small-text">
+    Used by the WhatsApp buttons on quotes and invoices. These are filled in for you:
+    <code>{name}</code> <code>{number}</code> <code>{total}</code> <code>{outstanding}</code> <code>{date}</code> <code>{due}</code>
+    <code>{business}</code> <code>{bank}</code> (your banking details). Clear a box to go back to the standard wording.
+  </p>
+  <label>New invoice
+    <textarea name="wa_invoice" rows="5" maxlength="1000"><%= values.wa_invoice %></textarea>
+  </label>
+  <label>Payment reminder
+    <textarea name="wa_reminder" rows="5" maxlength="1000"><%= values.wa_reminder %></textarea>
+  </label>
+  <label>Thank-you once paid in full
+    <textarea name="wa_receipt" rows="3" maxlength="1000"><%= values.wa_receipt %></textarea>
+  </label>
+  <label>Quote
+    <textarea name="wa_quote" rows="3" maxlength="1000"><%= values.wa_quote %></textarea>
+  </label>
   <div class="actions"><button class="btn primary" type="submit">Save settings</button></div>
 </form>
 

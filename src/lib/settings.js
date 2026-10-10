@@ -16,6 +16,18 @@ const DEFAULTS = {
   quote_valid_days: '30',
   bank_details: '',
   document_footer: '',
+
+  // Automation
+  auto_invoice_mode: 'draft', // off | draft | sent
+  renewal_reminder_days: '30', // 0 = off
+  overdue_followup_days: '7', // repeat interval; 0 = off
+  quote_followup_days: '7', // 0 = off
+
+  // WhatsApp message templates. Placeholders: {name} {number} {total} {outstanding} {date} {due} {business} {bank}
+  wa_invoice: 'Hi {name}, here is invoice {number} from {business} for {total}, due {due}.\n\n{bank}\n\nPlease use {number} as your payment reference. Thank you.',
+  wa_reminder: 'Hi {name}, a friendly reminder that {outstanding} is still outstanding on invoice {number} (due {due}).\n\n{bank}\n\nPlease use {number} as your payment reference. Thank you.',
+  wa_receipt: 'Hi {name}, thank you. We have received your payment and invoice {number} is now paid in full.',
+  wa_quote: 'Hi {name}, here is quote {number} from {business} for {total}, valid until {due}. Let me know if you would like to go ahead or have any questions.',
 };
 
 async function loadSettings() {

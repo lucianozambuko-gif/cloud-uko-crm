@@ -1,0 +1,7 @@
+<%# Small print under a task title. Expects: t (task row), today, and showClient (bool). %>
+<div class="muted small-text">
+  <% if (showClient && t.client_name) { %><a href="/clients/<%= t.client_id %>"><%= t.client_name %></a><% } %>
+  <% if (t.doc_number) { %><a href="/<%= t.doc_kind === 'quote' ? 'quotes' : 'invoices' %>/<%= t.document_id %>">Open <%= t.doc_number %></a><% } %>
+  <% if (t.due_date) { %><span class="<%= t.due_date < today ? 'late' : '' %>">Due <%= f.fmtDate(t.due_date) %></span><% } %>
+  <% if (t.auto_key) { %><span class="badge sent">Auto</span><% } %>
+</div>

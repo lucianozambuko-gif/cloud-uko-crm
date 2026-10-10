@@ -1,7 +1,8 @@
 const express = require('express');
 const { get, run } = require('../db');
 const v = require('../lib/validate');
-const { saveSettings } = require('../lib/settings');
+const { DEFAULTS, saveSettings } = require('../lib/settings');
+const { runAutomation } = require('../services/automation');
 const { hashPassword, verifyPassword } = require('../lib/password');
 const { validatePassword } = require('./auth');
 
@@ -29,7 +30,13 @@ router.post('/', async (req, res) => {
     quote_valid_days: v.str(b.quote_valid_days, 4),
     bank_details: v.text(b.bank_details, 1000),
     document_footer: v.text(b.document_footer, 1000),
+    auto_invoice_mode: v.str(b.auto_invoice_mode, 10),
+    renewal_reminder_days: v.str(b.renewal_reminder_days, 4),
+    overdue_followup_days: v.str(b.overdue_followup_days, 4),
+    quote_followup_days: v.str(b.quote_followup_days, 4),
   };
+  // A blank message template goes back to the built-in wording.
+  for (const key of ['wa_invoice', 'wa_reminder', 'wa_receipt', 'wa_quote']) values[key] = v.text(b[key], 1000) || DEFAULTS[key];
 
   const errors = [];
   const rate = Number(values.vat_rate);
@@ -44,11 +51,24 @@ router.post('/', async (req, res) => {
   for (const key of ['payment_terms_days', 'quote_valid_days']) {
     if (!/^\d{1,3}$/.test(values[key])) errors.push('Payment terms and quote validity must be a number of days.');
   }
+  if (!['off', 'draft', 'sent'].includes(values.auto_invoice_mode)) errors.push('Choose how recurring invoices are created.');
+  for (const key of ['renewal_reminder_days', 'overdue_followup_days', 'quote_followup_days']) {
+    if (!/^\d{1,3}$/.test(values[key])) errors.push('Automation day counts must be whole numbers (0 switches a rule off).');
+  }
   if (errors.length) return res.status(400).render('settings', { title: 'Settings', values, errors: [...new Set(errors)] });
 
   await saveSettings(values);
   v.flash(req, 'ok', 'Settings saved.');
   res.redirect('/settings');
+});
+
+router.post('/run-automation', async (req, res) => {
+  const { actions, closed } = await runAutomation();
+  const parts = [];
+  if (actions.length) parts.push(`${actions.length} new action(s): ${actions.join('; ')}`);
+  if (closed) parts.push(`${closed} task(s) ticked off`);
+  v.flash(req, 'ok', parts.length ? `Automation ran. ${parts.join('. ')}.` : 'Automation ran. Nothing new to do.');
+  res.redirect(v.safeBack(req.body.back, '/settings'));
 });
 
 router.post('/password', async (req, res) => {

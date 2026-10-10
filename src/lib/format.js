@@ -18,6 +18,10 @@ function addDays(iso, n) {
   return d.toISOString().slice(0, 10);
 }
 
+function daysBetween(fromIso, toIso) {
+  return Math.round((new Date(toIso + 'T00:00:00Z') - new Date(fromIso + 'T00:00:00Z')) / 86400000);
+}
+
 // Clamps to the last day of the target month (31 Jan + 1 month = 28/29 Feb).
 function addMonths(iso, n) {
   const [y, m, d] = iso.split('-').map(Number);
@@ -35,6 +39,15 @@ function fmtDate(iso) {
   if (!isDate(iso)) return '';
   const [y, m, d] = iso.split('-');
   return `${d} ${MONTHS[Number(m) - 1]} ${y}`;
+}
+
+// Timestamp (ISO, UTC) shown in South African time, e.g. "10 Oct 2026, 15:15".
+function fmtDateTime(isoTimestamp) {
+  const d = new Date(isoTimestamp);
+  if (Number.isNaN(d.getTime())) return '';
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(d);
+  const time = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+  return `${fmtDate(date)}, ${time}`;
 }
 
 function fmtMonth(iso) {
@@ -77,6 +90,6 @@ function docState(doc) {
 }
 
 module.exports = {
-  today, isDate, addDays, addMonths, addInterval, fmtDate, fmtMonth,
+  today, isDate, addDays, daysBetween, addMonths, addInterval, fmtDate, fmtDateTime, fmtMonth,
   money, moneyInput, parseMoney, docState,
 };

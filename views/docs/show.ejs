@@ -7,6 +7,9 @@
   <h1><%= doc.number %> <span class="badge <%= s.cls %>"><%= s.label %></span></h1>
   <div class="actions">
     <a class="btn" href="<%= base %>/<%= doc.id %>/pdf" target="_blank" rel="noopener">PDF</a>
+    <% for (const w of whatsapp) { if (w.href) { %>
+      <a class="btn wa" href="<%= w.href %>" target="_blank" rel="noopener noreferrer"><%= w.label %></a>
+    <% } } %>
     <% if (editable) { %><a class="btn" href="<%= base %>/<%= doc.id %>/edit">Edit</a><% } %>
     <% if (doc.status === 'draft') { %>
       <form method="post" action="<%= base %>/<%= doc.id %>/status">
@@ -23,6 +26,16 @@
     <% } %>
   </div>
 </div>
+
+<% if (whatsapp.length) { %>
+  <p class="muted small-text">
+    <% if (whatsapp[0].href) { %>
+      The WhatsApp buttons open a chat with <%= client.name %> with the message already written. Attach the PDF yourself before sending.
+    <% } else { %>
+      Add a phone number to <a href="/clients/<%= client.id %>/edit"><%= client.name %></a> to message them on WhatsApp from here.
+    <% } %>
+  </p>
+<% } %>
 
 <section class="card">
   <dl class="details cols">
