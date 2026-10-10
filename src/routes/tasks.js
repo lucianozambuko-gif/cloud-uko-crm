@@ -7,9 +7,11 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   const [open, done, clients] = await Promise.all([
-    all(`SELECT t.*, c.name AS client_name FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
+    all(`SELECT t.*, c.name AS client_name, d.number AS doc_number, d.kind AS doc_kind FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
+         LEFT JOIN documents d ON d.id = t.document_id
          WHERE t.done_at IS NULL ORDER BY t.due_date IS NULL, t.due_date, t.id`),
-    all(`SELECT t.*, c.name AS client_name FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
+    all(`SELECT t.*, c.name AS client_name, d.number AS doc_number, d.kind AS doc_kind FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
+         LEFT JOIN documents d ON d.id = t.document_id
          WHERE t.done_at IS NOT NULL ORDER BY t.done_at DESC LIMIT 20`),
     all('SELECT id, name FROM clients WHERE archived = 0 ORDER BY name COLLATE NOCASE'),
   ]);

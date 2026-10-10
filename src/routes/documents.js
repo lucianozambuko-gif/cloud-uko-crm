@@ -5,6 +5,8 @@ const { today, isDate, addDays, parseMoney, moneyInput } = require('../lib/forma
 const { currentVatRate } = require('../lib/settings');
 const { DOC_SELECT, createDocument, updateDocument, getItems } = require('../services/documents');
 const { renderPdf } = require('../pdf');
+const wa = require('../lib/whatsapp');
+const { closeResolvedTasks } = require('../services/automation');
 
 const PAYMENT_METHODS = ['EFT', 'Cash', 'Card', 'Other'];
 
@@ -133,6 +135,7 @@ module.exports = function documentsRouter(kind) {
     ]);
     res.render('docs/show', {
       ...view, title: doc.number, doc, items, payments, client, statuses, editable: editable(doc), today: today(),
+      whatsapp: wa.documentButtons({ doc, client, settings: res.locals.settings }),
     });
   });
 
@@ -190,6 +193,7 @@ module.exports = function documentsRouter(kind) {
       return res.redirect(`${base}/${doc.id}`);
     }
     await run('UPDATE documents SET status = ? WHERE id = ?', [status, doc.id]);
+    await closeResolvedTasks();
     v.flash(req, 'ok', `${doc.number} marked as ${status}.`);
     res.redirect(`${base}/${doc.id}`);
   });
@@ -202,6 +206,9 @@ module.exports = function documentsRouter(kind) {
     }
     await db.batch(
       [
+        // Automatic tasks about this draft go with it; your own tasks are kept but unlinked.
+        { sql: 'DELETE FROM tasks WHERE document_id = ? AND auto_key IS NOT NULL', args: [doc.id] },
+        { sql: 'UPDATE tasks SET document_id = NULL WHERE document_id = ?', args: [doc.id] },
         { sql: 'DELETE FROM document_items WHERE document_id = ?', args: [doc.id] },
         { sql: 'DELETE FROM documents WHERE id = ?', args: [doc.id] },
       ],
@@ -232,6 +239,7 @@ module.exports = function documentsRouter(kind) {
 
       await run('INSERT INTO payments (document_id, amount_cents, paid_on, method, reference) VALUES (?, ?, ?, ?, ?)',
         [doc.id, amount, paidOn, method, v.str(req.body.reference, 100)]);
+      await closeResolvedTasks();
       v.flash(req, 'ok', 'Payment recorded.');
       res.redirect(`${base}/${doc.id}`);
     });
@@ -270,6 +278,7 @@ module.exports = function documentsRouter(kind) {
         settings
       );
       await run("UPDATE documents SET status = 'accepted' WHERE id = ?", [quote.id]);
+      await closeResolvedTasks();
       v.flash(req, 'ok', `Draft invoice created from ${quote.number}.`);
       res.redirect(`/invoices/${id}`);
     });

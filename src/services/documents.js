@@ -77,8 +77,8 @@ function getItems(documentId) {
   return all('SELECT * FROM document_items WHERE document_id = ? ORDER BY position', [documentId]);
 }
 
-// Creates a draft invoice for the service's next period and moves next_date on.
-async function generateFromRecurring(rec, settings) {
+// Creates an invoice (draft unless told otherwise) for the service's next period and moves next_date on.
+async function generateFromRecurring(rec, settings, status = 'draft') {
   const issue = today();
   const nextDate = addInterval(rec.next_date, rec.interval);
   const period = rec.interval === 'yearly'
@@ -91,7 +91,7 @@ async function generateFromRecurring(rec, settings) {
       project_id: rec.project_id,
       issue_date: issue,
       due_date: addDays(issue, Number(settings.payment_terms_days) || 0),
-      status: 'draft',
+      status,
       vat_rate: currentVatRate(settings),
       recurring_id: rec.id,
       items: [{ description: `${rec.description} - ${period}`, quantity: 1, unit_cents: rec.amount_cents }],

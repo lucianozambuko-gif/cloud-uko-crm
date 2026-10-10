@@ -20,11 +20,8 @@
     <dl class="details">
       <% if (client.company) { %><dt>Company</dt><dd><%= client.company %></dd><% } %>
       <dt>Phone</dt>
-      <dd><% if (client.phone) {
-        // wa.me needs the international number without "+"; assume South Africa for local 0... numbers.
-        const digits = client.phone.replace(/\D/g, '');
-        const wa = client.phone.trim().startsWith('+') ? digits : digits.replace(/^0/, '27'); %>
-        <a href="tel:<%= client.phone.replace(/[^+\d]/g, '') %>"><%= client.phone %></a> · <a href="https://wa.me/<%= wa %>" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <dd><% if (client.phone) { const chat = wa.link(client.phone); %>
+        <a href="tel:<%= client.phone.replace(/[^+\d]/g, '') %>"><%= client.phone %></a><% if (chat) { %> · <a href="<%= chat %>" target="_blank" rel="noopener noreferrer">WhatsApp</a><% } %>
       <% } else { %><span class="muted">None</span><% } %></dd>
       <dt>Email</dt>
       <dd><% if (client.email) { %><a href="mailto:<%= client.email %>"><%= client.email %></a><% } else { %><span class="muted">None</span><% } %></dd>
@@ -46,7 +43,7 @@
           </form>
           <div>
             <%= t.title %>
-            <% if (t.due_date) { %><div class="small-text <%= t.due_date < today ? 'late' : 'muted' %>">Due <%= f.fmtDate(t.due_date) %></div><% } %>
+            <%- include('../partials/task-meta', { t, showClient: false }) %>
           </div>
         </li>
       <% } %>

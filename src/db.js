@@ -14,6 +14,16 @@ const db = createClient({
 async function migrate() {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   await db.executeMultiple(schema);
+
+  // Columns added after v1: CREATE TABLE IF NOT EXISTS does not alter tables that already exist.
+  await ensureColumn('tasks', 'document_id', 'INTEGER REFERENCES documents(id)');
+  await ensureColumn('tasks', 'auto_key', 'TEXT');
+  await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_document ON tasks(document_id)');
+}
+
+async function ensureColumn(table, column, definition) {
+  const cols = (await db.execute(`PRAGMA table_info(${table})`)).rows;
+  if (!cols.some((c) => c.name === column)) await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 
 async function all(sql, args = []) {

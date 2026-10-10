@@ -14,12 +14,26 @@ npm install
 npm start
 ```
 
-Or double-click `start-crm.bat`. Then open <http://localhost:3000>.
+Then open <http://localhost:3000>.
 
 On the first visit you are asked to create your login (username and a password of at least 10 characters).
 After that the setup page is closed. Change the password under **Settings**.
 
-Keep the window open while you use the CRM; closing it stops the server.
+### Desktop app
+
+```
+powershell -ExecutionPolicy Bypass -File scripts\install-shortcut.ps1
+```
+
+This puts a **Cloud Uko CRM** icon on the Desktop and in the Start menu. Opening it starts the server in the
+background (no console window) if it is not already running, then opens the CRM in its own window.
+
+- Closing the window does not stop the server, so phone access and automation keep working until the PC
+  shuts down. To stop it, double-click `stop-crm.bat`.
+- The server's output goes to `data/crm.log` and `data/crm-error.log`.
+- Run the install command again if you move the project folder.
+
+`start-crm.bat` still works if you prefer a visible console window; closing that window stops the server.
 
 ## Settings to fill in before your first real invoice
 
@@ -34,10 +48,37 @@ To put your logo on PDFs, save it as `data/logo.png` (or `logo.jpg`).
 - A new invoice starts as a **draft**. **Mark as sent** makes it count as billed and unlocks payments.
 - Payments are recorded against an invoice, so part-payments show as *Part-paid* with the balance outstanding.
 - A sent invoice is locked. To change it, move it back to draft (only possible while it has no payments).
-- **Recurring billing** holds monthly and yearly services. *Invoice now* (or *Create invoices for due*) creates
-  a draft invoice for the next period and moves the next billing date on.
+- **Recurring billing** holds monthly and yearly services. They are invoiced automatically on their billing
+  date (see Automation below). *Invoice now* still works if you want to bill early.
 - VAT is only added when "VAT registered" is ticked in Settings. Existing documents keep the rate they were
   created with.
+
+## Automation
+
+Checks run when the CRM starts and then every hour while it is open. If the PC was off, the next start
+catches up (at most 12 missed periods per service). Each rule can be changed or switched off under
+**Settings > Automation**, and the dashboard lists what was done.
+
+| Rule | What happens | Default |
+|---|---|---|
+| Recurring service reaches its billing date | Invoice is created, plus a task to check and send it | Draft invoice |
+| Yearly renewal is coming up | Task to confirm the price and tell the client | 30 days before |
+| Invoice is overdue and unpaid | Task to chase payment, repeated while it stays unpaid | Every 7 days |
+| Sent quote has had no answer | Task to follow up | After 7 days |
+
+Automatic tasks are marked *Auto* and link to the invoice or quote. They tick themselves off when the
+reason goes away: the draft is sent, the invoice is paid, the quote is accepted or declined.
+
+Nothing is sent to clients automatically. The CRM prepares the work; you send it.
+
+## WhatsApp messages
+
+Quotes and invoices have WhatsApp buttons (new invoice, payment reminder, thank-you once paid, quote).
+A button opens WhatsApp chatting to the client with the message already written, including the amount,
+due date and your banking details. You press send, and attach the PDF yourself.
+
+Edit the wording under **Settings > WhatsApp messages**. The client needs a phone number; local numbers
+starting with 0 are treated as South African (+27).
 
 ## Use it from your phone, anywhere (Tailscale)
 
@@ -89,6 +130,8 @@ src/server.js            app setup, security headers, sessions, CSRF, auth guard
 src/schema.sql           database tables (applied on every start, safe to re-run)
 src/routes/              one file per section; documents.js serves both quotes and invoices
 src/services/documents.js numbering, totals, recurring invoice generation
+src/services/automation.js the hourly rules (recurring invoices, renewal, overdue and quote follow-ups)
+src/lib/whatsapp.js      phone number handling and WhatsApp message templates
 src/pdf.js               quote / invoice PDF layout
 views/, public/          EJS pages, CSS and the small front-end script
 scripts/                 backup and seed import

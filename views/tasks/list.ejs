@@ -24,10 +24,7 @@
         </form>
         <div class="grow">
           <%= t.title %>
-          <div class="muted small-text">
-            <% if (t.client_name) { %><a href="/clients/<%= t.client_id %>"><%= t.client_name %></a><% } %>
-            <% if (t.due_date) { %><span class="<%= t.due_date < today ? 'late' : '' %>">Due <%= f.fmtDate(t.due_date) %></span><% } %>
-          </div>
+          <%- include('../partials/task-meta', { t, showClient: true }) %>
         </div>
         <form method="post" action="/tasks/<%= t.id %>/delete">
           <input type="hidden" name="_csrf" value="<%= csrf %>">

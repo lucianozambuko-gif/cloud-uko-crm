@@ -104,6 +104,16 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- One row per automatic action. The unique key stops the same action from happening twice
+-- (e.g. "chase:12:1" = first overdue follow-up for invoice 12), even if its task is later deleted.
+CREATE TABLE IF NOT EXISTS automation_log (
+  id INTEGER PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  message TEXT NOT NULL,
+  link TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_projects_client ON projects(client_id);
 CREATE INDEX IF NOT EXISTS idx_documents_client ON documents(client_id);
 CREATE INDEX IF NOT EXISTS idx_documents_kind ON documents(kind, status);
