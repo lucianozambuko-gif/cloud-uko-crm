@@ -33,6 +33,9 @@ async function main() {
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, '..', 'views'));
   app.disable('x-powered-by');
+  // "tailscale serve" proxies HTTPS to this server from the same machine. Trusting only loopback proxies
+  // keeps the real client address for the login lockout without letting outside requests fake one.
+  app.set('trust proxy', 'loopback');
 
   app.use((req, res, next) => {
     res.set({
