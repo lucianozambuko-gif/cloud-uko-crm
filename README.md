@@ -92,10 +92,30 @@ your own devices can join.
 3. On your phone, with Tailscale switched on, open `http://<that 100.x address>:3000`.
 4. The first time, Windows Firewall asks whether to allow Node.js. Allow it on private networks.
 
-To get an app icon on the phone: open the CRM in Chrome, tap the menu (three dots) and choose
-**Add to Home screen**. The icon is the Cloud UKO logo (from `public/manifest.webmanifest` and
-`public/icons/`). Because the address is plain `http`, it opens in Chrome with the address bar showing;
-a full-screen app window needs HTTPS (for example `tailscale serve`).
+### HTTPS and the phone app
+
+Once HTTPS is enabled for your Tailscale account (admin console, DNS page, "HTTPS Certificates"), run:
+
+```
+tailscale serve --bg 3000
+```
+
+The CRM is then also at `https://<pc-name>.<your-tailnet>.ts.net`, only for your own devices. Tailscale
+remembers this across restarts. To switch it off: `tailscale serve --https=443 off`.
+
+To install it on the phone: open that `https` address in Chrome, tap the menu (three dots) and choose
+**Add to Home screen** / **Install app**. Over HTTPS it opens full screen like an app, with the Cloud UKO
+logo as its icon (from `public/manifest.webmanifest` and `public/icons/`). Added from a plain `http`
+address it is only a bookmark that opens in Chrome.
+
+### Start with Windows
+
+```
+powershell -ExecutionPolicy Bypass -File scripts\install-shortcut.ps1 -StartWithWindows
+```
+
+Starts the server in the background when you sign in to Windows, without opening a window, so the phone
+can reach the CRM without you starting it. Use `-NoStartWithWindows` to undo it.
 
 The PC has to be on and the CRM running. Traffic between your devices is encrypted by Tailscale.
 On the same Wi-Fi you can also use the PC's local address, which is listed at startup too.

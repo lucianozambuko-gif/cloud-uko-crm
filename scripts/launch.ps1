@@ -1,5 +1,7 @@
 # Starts the CRM in the background (if it is not already running) and opens it in its own app window.
 # Used by the "Cloud Uko CRM" desktop shortcut. Create the shortcut with scripts\install-shortcut.ps1.
+# -Background starts the server without opening a window (used by the Windows start-up shortcut).
+param([switch]$Background)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
@@ -44,7 +46,21 @@ try {
     }
   }
 
+  if ($Background) { exit 0 }
+
+  # APP_URL in .env (e.g. the Tailscale HTTPS address) is what the window opens, if it answers.
+  # Otherwise, for example when Tailscale is switched off, fall back to the local address.
   $url = "http://localhost:$port"
+  if (Test-Path $envFile) {
+    $appLine = Get-Content $envFile | Where-Object { $_ -match '^\s*APP_URL\s*=\s*(https?://\S+)\s*$' } | Select-Object -Last 1
+    if ($appLine -match '(https?://\S+)') {
+      $appUrl = $Matches[1].TrimEnd('/')
+      try {
+        Invoke-WebRequest "$appUrl/favicon.ico" -UseBasicParsing -TimeoutSec 5 | Out-Null
+        $url = $appUrl
+      } catch { }
+    }
+  }
   $browser = @(
     "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
     "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
@@ -59,6 +75,11 @@ try {
     Start-Process $url
   }
 } catch {
-  Show-Error $_.Exception.Message
+  # At Windows start-up nobody asked for the CRM, so fail quietly into the log instead of a pop-up.
+  if ($Background) {
+    Add-Content -Path (Join-Path $root 'data\crm-error.log') -Value "[$(Get-Date -Format s)] start-up launch failed: $($_.Exception.Message)" -ErrorAction SilentlyContinue
+  } else {
+    Show-Error $_.Exception.Message
+  }
   exit 1
 }
