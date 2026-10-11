@@ -1,0 +1,176 @@
+<%- include('../partials/head') %>
+<%
+  const p = project;
+  const demo = pj.href(p.demo_url);
+  const live = pj.href(p.url);
+  const currentIndex = pj.stageIndex(p.stage);
+%>
+<div class="page-head">
+  <h1><%= p.name %> <%- include('../partials/stage-badge', { p }) %></h1>
+  <div class="actions">
+    <% for (const w of whatsapp) { if (w.href) { %>
+      <a class="btn wa" href="<%= w.href %>" target="_blank" rel="noopener noreferrer"><%= w.label %></a>
+    <% } } %>
+    <a class="btn" href="/projects/<%= p.id %>/edit">Edit</a>
+    <a class="btn" href="/invoices/new?project_id=<%= p.id %>">New invoice</a>
+  </div>
+</div>
+
+<section class="card">
+  <ol class="stages">
+    <% stages.forEach((s, i) => { %>
+      <li class="<%= i < currentIndex ? 'done' : i === currentIndex ? 'current' : '' %>">
+        <form method="post" action="/projects/<%= p.id %>/stage">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <input type="hidden" name="stage" value="<%= s.key %>">
+          <button type="submit" title="Move to <%= s.label %>" <%= i === currentIndex ? 'disabled' : '' %>
+            <% if (i < currentIndex) { %>data-confirm="Move <%= p.name %> back to <%= s.label %>?"<% } %>><span><%= i + 1 %></span><%= s.label %></button>
+        </form>
+      </li>
+    <% }) %>
+  </ol>
+  <%- include('../partials/progress', { p }) %>
+  <p class="muted small-text">
+    <% if (p.steps_total) { %><%= p.steps_done %> of <%= p.steps_total %> steps done.<% } else { %>No checklist yet, so progress follows the stage.<% } %>
+    Tap a stage to move the project there.
+  </p>
+  <% if (next && p.state === 'open') { %>
+    <form method="post" action="/projects/<%= p.id %>/stage" class="actions">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="stage" value="<%= next.key %>">
+      <button class="btn <%= stageDone ? 'primary' : '' %>" type="submit">Move to <%= next.label %></button>
+      <% if (stageDone) { %><span class="muted small-text">All <%= pj.stageLabel(p.stage) %> steps are ticked.</span><% } %>
+    </form>
+  <% } %>
+</section>
+
+<div class="two-col">
+  <section class="card">
+    <h2>Details</h2>
+    <dl class="details">
+      <dt>Client</dt><dd><a href="/clients/<%= p.client_id %>"><%= p.client_name %></a></dd>
+      <% if (p.type) { %><dt>Type</dt><dd><%= p.type %></dd><% } %>
+      <dt>Demo site</dt>
+      <dd><% if (demo) { %><a href="<%= demo %>" target="_blank" rel="noopener noreferrer"><%= p.demo_url %></a><% } else { %><span class="muted">Not set yet</span><% } %></dd>
+      <dt>Live site</dt>
+      <dd><% if (live) { %><a href="<%= live %>" target="_blank" rel="noopener noreferrer"><%= p.url %></a><% } else { %><span class="muted">Not set yet</span><% } %></dd>
+      <% if (p.start_date) { %><dt>Started</dt><dd><%= f.fmtDate(p.start_date) %></dd><% } %>
+      <% if (p.target_date) { %>
+        <dt>Target</dt>
+        <dd class="<%= p.target_date < today && p.stage !== 'live' && p.state === 'open' ? 'late' : '' %>"><%= f.fmtDate(p.target_date) %></dd>
+      <% } %>
+      <% if (p.notes) { %><dt>Notes</dt><dd class="pre"><%= p.notes %></dd><% } %>
+    </dl>
+    <% if (whatsapp.length && !whatsapp[0].href) { %>
+      <p class="muted small-text">Add a phone number to the client to send them the link on WhatsApp from here.</p>
+    <% } %>
+  </section>
+
+  <section class="card">
+    <h2>Follow-up tasks</h2>
+    <ul class="tasks">
+      <% for (const t of tasks) { %>
+        <li>
+          <form method="post" action="/tasks/<%= t.id %>/toggle">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <input type="hidden" name="back" value="/projects/<%= p.id %>">
+            <button class="check" type="submit" title="Mark as done" aria-label="Mark as done"></button>
+          </form>
+          <div>
+            <%= t.title %>
+            <%- include('../partials/task-meta', { t, showClient: false }) %>
+          </div>
+        </li>
+      <% } %>
+    </ul>
+    <form method="post" action="/tasks" class="inline-form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <input type="hidden" name="back" value="/projects/<%= p.id %>">
+      <input type="hidden" name="client_id" value="<%= p.client_id %>">
+      <input type="hidden" name="project_id" value="<%= p.id %>">
+      <input type="text" name="title" placeholder="Add a follow-up" maxlength="200" required aria-label="Task">
+      <input type="date" name="due_date" aria-label="Due date">
+      <button class="btn" type="submit">Add</button>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Checklist</h2>
+    <% if (!steps.length) { %>
+      <form method="post" action="/projects/<%= p.id %>/steps/standard">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <button class="btn small" type="submit">Add the standard checklist</button>
+      </form>
+    <% } %>
+  </div>
+  <% if (!steps.length) { %><p class="muted">No steps yet. Add the standard checklist, or add your own steps below.</p><% } %>
+  <% stages.forEach((s, i) => { const group = steps.filter((x) => x.stage === s.key); if (!group.length) return; %>
+    <h3 class="<%= i === currentIndex ? 'current-stage' : '' %>"><%= s.label %>
+      <span class="muted small-text"><%= group.filter((x) => x.done_at).length %>/<%= group.length %></span>
+    </h3>
+    <ul class="tasks">
+      <% for (const step of group) { %>
+        <li class="<%= step.done_at ? 'faded' : '' %>">
+          <form method="post" action="/projects/<%= p.id %>/steps/<%= step.id %>/toggle">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <button class="check <%= step.done_at ? 'done' : '' %>" type="submit" title="<%= step.done_at ? 'Untick' : 'Tick' %>" aria-label="<%= step.done_at ? 'Untick' : 'Tick' %> <%= step.title %>"></button>
+          </form>
+          <div class="grow"><% if (step.done_at) { %><s><%= step.title %></s><% } else { %><%= step.title %><% } %></div>
+          <form method="post" action="/projects/<%= p.id %>/steps/<%= step.id %>/delete">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <button class="btn small ghost" type="submit" data-confirm="Remove this step from the checklist?">Remove</button>
+          </form>
+        </li>
+      <% } %>
+    </ul>
+  <% }) %>
+  <form method="post" action="/projects/<%= p.id %>/steps" class="inline-form">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <input type="text" name="title" placeholder="Add a step" maxlength="200" required aria-label="Step">
+    <select name="stage" aria-label="Stage">
+      <% for (const s of stages) { %><option value="<%= s.key %>" <%= s.key === p.stage ? 'selected' : '' %>><%= s.label %></option><% } %>
+    </select>
+    <button class="btn" type="submit">Add step</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Billing</h2>
+    <a class="btn small" href="/recurring/new?client_id=<%= p.client_id %>">Add recurring service</a>
+  </div>
+  <% if (!documents.length && !recurring.length) { %>
+    <p class="muted">No quotes, invoices or recurring services are linked to this project yet.</p>
+  <% } %>
+  <% if (recurring.length) { %>
+    <ul class="log">
+      <% for (const r of recurring) { %>
+        <li class="<%= r.active ? '' : 'faded' %>">
+          <a href="/recurring/<%= r.id %>/edit"><%= r.description %></a>:
+          <%= f.money(r.amount_cents) %> every <%= r.interval === 'yearly' ? 'year' : 'month' %>, next <%= f.fmtDate(r.next_date) %><%= r.active ? '' : ' (paused)' %>
+        </li>
+      <% } %>
+    </ul>
+  <% } %>
+  <% if (documents.length) { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Number</th><th>Date</th><th class="num">Total</th><th class="num">Outstanding</th><th>Status</th></tr></thead>
+      <tbody>
+      <% for (const d of documents) { const s = f.docState(d); const inv = d.kind === 'invoice'; %>
+        <tr>
+          <td><a href="/<%= inv ? 'invoices' : 'quotes' %>/<%= d.id %>"><%= d.number %></a></td>
+          <td><%= f.fmtDate(d.issue_date) %></td>
+          <td class="num"><%= f.money(d.total_cents) %></td>
+          <td class="num"><%= inv && d.status === 'sent' ? f.money(d.total_cents - d.paid_cents) : '' %></td>
+          <td><span class="badge <%= s.cls %>"><%= s.label %></span></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+<%- include('../partials/foot') %>

@@ -1,0 +1,6 @@
+<%# Expects: p (project). Shows Paused / Cancelled in place of the stage when the project is not open. %>
+<% if (p.state !== 'open') { %>
+  <span class="badge <%= p.state === 'paused' ? 'part' : 'void' %>"><%= p.state %></span>
+<% } else { %>
+  <span class="badge stage-<%= p.stage %>"><%= pj.stageLabel(p.stage) %></span>
+<% } %>

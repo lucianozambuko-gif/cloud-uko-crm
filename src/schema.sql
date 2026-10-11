@@ -114,6 +114,17 @@ CREATE TABLE IF NOT EXISTS automation_log (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Checklist steps of a project, grouped by life-cycle stage. Progress = ticked steps / all steps.
+CREATE TABLE IF NOT EXISTS project_steps (
+  id INTEGER PRIMARY KEY,
+  project_id INTEGER NOT NULL REFERENCES projects(id),
+  stage TEXT NOT NULL,
+  title TEXT NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  done_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_steps_project ON project_steps(project_id);
 CREATE INDEX IF NOT EXISTS idx_projects_client ON projects(client_id);
 CREATE INDEX IF NOT EXISTS idx_documents_client ON documents(client_id);
 CREATE INDEX IF NOT EXISTS idx_documents_kind ON documents(kind, status);

@@ -19,11 +19,31 @@ async function migrate() {
   await ensureColumn('tasks', 'document_id', 'INTEGER REFERENCES documents(id)');
   await ensureColumn('tasks', 'auto_key', 'TEXT');
   await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_document ON tasks(document_id)');
+
+  // Project life cycle. "stage" is how far along the work is; "state" is open, paused or cancelled.
+  // The original "status" column is no longer used (it stays because SQLite cannot drop its CHECK rule).
+  const addedStage = await ensureColumn('projects', 'stage', "TEXT NOT NULL DEFAULT 'planning'");
+  await ensureColumn('projects', 'state', "TEXT NOT NULL DEFAULT 'open'");
+  await ensureColumn('projects', 'demo_url', "TEXT NOT NULL DEFAULT ''");
+  await ensureColumn('projects', 'start_date', 'TEXT');
+  await ensureColumn('projects', 'target_date', 'TEXT');
+  await ensureColumn('projects', 'stage_changed_at', 'TEXT');
+  await ensureColumn('tasks', 'project_id', 'INTEGER REFERENCES projects(id)');
+  await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)');
+  if (addedStage) {
+    // One-time carry-over from the old status values.
+    await db.execute("UPDATE projects SET stage = 'live' WHERE status = 'completed'");
+    await db.execute("UPDATE projects SET state = 'paused' WHERE status = 'paused'");
+    await db.execute("UPDATE projects SET status = 'active'");
+  }
 }
 
+// Returns true when the column had to be added.
 async function ensureColumn(table, column, definition) {
   const cols = (await db.execute(`PRAGMA table_info(${table})`)).rows;
-  if (!cols.some((c) => c.name === column)) await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  if (cols.some((c) => c.name === column)) return false;
+  await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  return true;
 }
 
 async function all(sql, args = []) {

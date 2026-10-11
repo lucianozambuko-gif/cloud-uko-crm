@@ -2,6 +2,7 @@
 <div class="muted small-text">
   <% if (showClient && t.client_name) { %><a href="/clients/<%= t.client_id %>"><%= t.client_name %></a><% } %>
   <% if (t.doc_number) { %><a href="/<%= t.doc_kind === 'quote' ? 'quotes' : 'invoices' %>/<%= t.document_id %>">Open <%= t.doc_number %></a><% } %>
+  <% if (t.project_name) { %><a href="/projects/<%= t.project_id %>">Open <%= t.project_name %></a><% } %>
   <% if (t.due_date) { %><span class="<%= t.due_date < today ? 'late' : '' %>">Due <%= f.fmtDate(t.due_date) %></span><% } %>
   <% if (t.auto_key) { %><span class="badge sent">Auto</span><% } %>
 </div>

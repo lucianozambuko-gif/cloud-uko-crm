@@ -22,8 +22,8 @@ async function logWithTask(key, message, link, task) {
     [
       { sql: 'INSERT INTO automation_log (key, message, link) VALUES (?, ?, ?)', args: [key, message, link] },
       {
-        sql: 'INSERT INTO tasks (client_id, document_id, auto_key, title, due_date) VALUES (?, ?, ?, ?, ?)',
-        args: [task.client_id, task.document_id ?? null, task.auto_key, task.title, task.due_date],
+        sql: 'INSERT INTO tasks (client_id, document_id, project_id, auto_key, title, due_date) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [task.client_id, task.document_id ?? null, task.project_id ?? null, task.auto_key, task.title, task.due_date],
       },
     ],
     'write'
@@ -143,8 +143,59 @@ async function quoteFollowUps(settings, t, actions) {
   }
 }
 
-// Ticks off automatic tasks whose reason has gone away: the invoice was paid or sent, the quote was answered.
+// 5. Follow up when a project has been waiting in client review with no movement.
+async function demoFollowUps(settings, t, actions) {
+  const days = Number(settings.demo_followup_days) || 0;
+  if (days <= 0) return;
+
+  const waiting = await all(
+    `SELECT p.id, p.name, p.client_id, substr(p.stage_changed_at, 1, 10) AS since, c.name AS client_name
+     FROM projects p JOIN clients c ON c.id = p.client_id
+     WHERE p.stage = 'review' AND p.state = 'open' AND c.archived = 0 AND p.stage_changed_at IS NOT NULL
+       AND substr(p.stage_changed_at, 1, 10) <= ?`, [addDays(t, -days)]);
+  for (const p of waiting) {
+    const key = `demo:${p.id}:${p.since}`;
+    if (await done(key)) continue;
+    const message = `${p.client_name} has had the ${p.name} demo since ${fmtDate(p.since)} with no feedback recorded`;
+    await logWithTask(key, message, `/projects/${p.id}`, {
+      client_id: p.client_id,
+      project_id: p.id,
+      auto_key: 'demo',
+      title: `Follow up on the ${p.name} demo (in client review since ${fmtDate(p.since)})`,
+      due_date: t,
+    });
+    actions.push(message);
+  }
+}
+
+// Called when a project moves to Live: reminds you to start billing hosting if nothing recurring is set up.
+async function projectWentLive(project) {
+  const key = `live:${project.id}`;
+  if (await done(key)) return;
+  const billed = await get('SELECT id FROM recurring WHERE project_id = ? AND active = 1', [project.id]);
+  if (billed) return log(key, `${project.name} went live (recurring billing already set up)`, `/projects/${project.id}`);
+  await logWithTask(key, `${project.name} went live: hosting billing still to set up`, `/projects/${project.id}`, {
+    client_id: project.client_id,
+    project_id: project.id,
+    auto_key: 'golive',
+    title: `Set up hosting billing for ${project.name} (now live)`,
+    due_date: today(),
+  });
+}
+
+// Ticks off automatic tasks whose reason has gone away: the invoice was paid or sent, the quote was answered,
+// the project moved on from client review.
 async function closeResolvedTasks() {
+  const projects = await run(
+    `UPDATE tasks SET done_at = datetime('now')
+     WHERE done_at IS NULL AND auto_key = 'demo' AND project_id IN (
+       SELECT p.id FROM projects p WHERE p.stage != 'review' OR p.state != 'open')`
+  );
+  const documents = await closeResolvedDocumentTasks();
+  return projects.changes + documents;
+}
+
+async function closeResolvedDocumentTasks() {
   const { changes } = await run(
     `UPDATE tasks SET done_at = datetime('now')
      WHERE done_at IS NULL AND auto_key IN ('chase', 'review', 'quote') AND document_id IN (
@@ -171,6 +222,7 @@ async function runAutomation() {
     await renewalReminders(settings, t, actions);
     await chaseOverdue(settings, t, actions);
     await quoteFollowUps(settings, t, actions);
+    await demoFollowUps(settings, t, actions);
     await run(
       "INSERT INTO settings (key, value) VALUES ('automation_last_run', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
       [new Date().toISOString()]
@@ -185,4 +237,4 @@ function recentActions(limit = 8) {
   return all('SELECT message, link, created_at FROM automation_log ORDER BY id DESC LIMIT ?', [limit]);
 }
 
-module.exports = { runAutomation, closeResolvedTasks, recentActions, log };
+module.exports = { runAutomation, closeResolvedTasks, projectWentLive, recentActions, log };

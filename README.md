@@ -53,6 +53,21 @@ To put your logo on PDFs, save it as `data/logo.png` (or `logo.jpg`).
 - VAT is only added when "VAT registered" is ticked in Settings. Existing documents keep the rate they were
   created with.
 
+## Project life cycle
+
+Every project moves through six stages: **Planning, Building, Demo ready, Client review, Final changes, Live**.
+A project can also be paused or cancelled without losing its stage.
+
+- **Two links.** The demo site link comes first; the live (production) link is filled in at go-live.
+- **Checklist.** A new project starts with the standard checklist, grouped by stage. Tick steps off and the
+  progress bar shows the share done. Without a checklist, progress follows the stage.
+- **Moving on.** Tap a stage on the project page, or use the "Move to ..." button. When every step of the
+  current stage is ticked you get a nudge to move on; nothing moves by itself.
+- **Standard checklist.** Edit it under **Settings**, one step per line as `Stage name: step`. Changes apply
+  to new projects only. Adding it to a project part-way through pre-ticks the stages already passed.
+- **WhatsApp.** The project page has a button to send the client the demo link, and the live link once live.
+- **Overview.** The Projects list and the Dashboard show each project's stage and progress.
+
 ## Automation
 
 Checks run when the CRM starts and then every hour while it is open. If the PC was off, the next start
@@ -65,6 +80,8 @@ catches up (at most 12 missed periods per service). Each rule can be changed or 
 | Yearly renewal is coming up | Task to confirm the price and tell the client | 30 days before |
 | Invoice is overdue and unpaid | Task to chase payment, repeated while it stays unpaid | Every 7 days |
 | Sent quote has had no answer | Task to follow up | After 7 days |
+| Project has sat in Client review | Task to follow up on the demo | After 7 days |
+| Project moves to Live | Task to set up hosting billing, unless it already has recurring billing | Always |
 
 Automatic tasks are marked *Auto* and link to the invoice or quote. They tick themselves off when the
 reason goes away: the draft is sent, the invoice is paid, the quote is accepted or declined.

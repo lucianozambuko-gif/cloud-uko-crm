@@ -79,7 +79,19 @@
     <label>Remind me to follow up a sent quote after (days)
       <input type="text" name="quote_followup_days" value="<%= values.quote_followup_days %>" inputmode="numeric" required>
     </label>
+    <label>Remind me when a demo has been in client review for (days)
+      <input type="text" name="demo_followup_days" value="<%= values.demo_followup_days %>" inputmode="numeric" required>
+    </label>
   </div>
+
+  <h2 id="checklist">Standard project checklist</h2>
+  <p class="muted small-text">
+    The steps every new project starts with. One step per line, written as <code>Stage name: step</code>.
+    Stages: <%= pj.STAGES.map((s) => s.label).join(', ') %>. Changing this does not change projects that already exist.
+  </p>
+  <label>Steps
+    <textarea name="project_checklist" rows="12" maxlength="6000"><%= values.project_checklist %></textarea>
+  </label>
 
   <h2>WhatsApp messages</h2>
   <p class="muted small-text">
@@ -98,6 +110,13 @@
   </label>
   <label>Quote
     <textarea name="wa_quote" rows="3" maxlength="1000"><%= values.wa_quote %></textarea>
+  </label>
+  <p class="muted small-text">Project messages use <code>{name}</code> <code>{project}</code> <code>{link}</code> <code>{business}</code>.</p>
+  <label>Demo is ready
+    <textarea name="wa_demo" rows="4" maxlength="1000"><%= values.wa_demo %></textarea>
+  </label>
+  <label>Site is live
+    <textarea name="wa_live" rows="3" maxlength="1000"><%= values.wa_live %></textarea>
   </label>
   <div class="actions"><button class="btn primary" type="submit">Save settings</button></div>
 </form>

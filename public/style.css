@@ -77,6 +77,7 @@ tfoot tr:first-child td { border-top: 2px solid var(--line); padding-top: 10px; 
 .row-actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
 .row-actions form { margin: 0; }
 .faded { opacity: 0.6; }
+td > a + a { margin-left: 10px; }
 
 /* Badges */
 .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: #e8ecf1; color: #44505f; white-space: nowrap; text-transform: capitalize; }
@@ -144,6 +145,34 @@ textarea { resize: vertical; }
 .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 .tabs a { padding: 6px 12px; border-radius: 999px; background: #e8ecf1; color: var(--text); font-size: 0.9rem; }
 .tabs a.active { background: var(--navy); color: #fff; }
+
+/* Project life cycle */
+.progress { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+.progress progress { flex: 1; height: 10px; min-width: 70px; appearance: none; -webkit-appearance: none; border: 0; border-radius: 999px; background: #e3e8ee; overflow: hidden; }
+.progress progress::-webkit-progress-bar { background: #e3e8ee; border-radius: 999px; }
+.progress progress::-webkit-progress-value { background: var(--accent); border-radius: 999px; }
+.progress progress::-moz-progress-bar { background: var(--accent); border-radius: 999px; }
+.progress span { font-size: 0.85rem; font-weight: 600; min-width: 38px; text-align: right; }
+.card > .progress { margin: 14px 0 6px; }
+.card > .progress progress { height: 14px; }
+
+.badge.stage-planning { background: #e8ecf1; color: #44505f; }
+.badge.stage-building { background: #e3eefc; color: #1a5bc4; }
+.badge.stage-demo, .badge.stage-review { background: #efe6fb; color: #6b3fb0; }
+.badge.stage-final { background: var(--warn-bg); color: var(--warn); }
+.badge.stage-live { background: var(--ok-bg); color: var(--ok); }
+
+.stages { list-style: none; display: flex; gap: 6px; margin: 0; padding: 0; overflow-x: auto; }
+.stages li { flex: 1 0 auto; }
+.stages form { margin: 0; }
+.stages button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--muted); font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.stages button span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #e8ecf1; color: #44505f; font-size: 0.8rem; }
+.stages button:hover { background: #f1f4f7; }
+.stages li.done button { color: var(--ok); border-color: #bfe3cf; background: var(--ok-bg); }
+.stages li.done button span { background: var(--ok); color: #fff; }
+.stages li.current button { color: #fff; background: var(--navy); border-color: var(--navy); cursor: default; }
+.stages li.current button span { background: #fff; color: var(--navy); }
+h3.current-stage { color: var(--accent-dark); }
 
 .log { list-style: none; margin: 0 0 12px; padding: 0; }
 .log li { padding: 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }

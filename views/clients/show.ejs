@@ -69,15 +69,15 @@
   <% } else { %>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Project</th><th>Type</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+      <thead><tr><th>Project</th><th>Type</th><th>Stage</th><th>Progress</th><th>Notes</th></tr></thead>
       <tbody>
       <% for (const p of projects) { %>
-        <tr>
-          <td><%= p.name %><% if (p.url) { %><div class="muted small-text"><%= p.url %></div><% } %></td>
+        <tr class="<%= p.state === 'open' ? '' : 'faded' %>">
+          <td><a href="/projects/<%= p.id %>"><%= p.name %></a><% if (p.url) { %><div class="muted small-text"><%= p.url %></div><% } %></td>
           <td><%= p.type %></td>
-          <td><span class="badge <%= p.status %>"><%= p.status %></span></td>
+          <td><%- include('../partials/stage-badge', { p }) %></td>
+          <td><%- include('../partials/progress', { p }) %></td>
           <td class="pre"><%= p.notes %></td>
-          <td class="num"><a href="/projects/<%= p.id %>/edit">Edit</a></td>
         </tr>
       <% } %>
       </tbody>
