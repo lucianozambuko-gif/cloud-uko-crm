@@ -10,6 +10,7 @@ const { loadSettings } = require('./lib/settings');
 const { DbSessionStore, DEFAULT_TTL } = require('./lib/session-store');
 const fmt = require('./lib/format');
 const whatsapp = require('./lib/whatsapp');
+const projectLib = require('./lib/projects');
 const { runAutomation } = require('./services/automation');
 const auth = require('./routes/auth');
 
@@ -65,6 +66,7 @@ async function main() {
     res.locals.csrf = req.session.csrf;
     res.locals.f = fmt;
     res.locals.wa = whatsapp;
+    res.locals.pj = projectLib;
     res.locals.path = req.path;
     res.locals.user = null;
     res.locals.errors = [];

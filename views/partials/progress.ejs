@@ -1,0 +1,6 @@
+<%# Stage badge and progress bar for a project row. Expects: p (project with steps_total / steps_done). %>
+<% const pct = pj.progress(p); %>
+<div class="progress">
+  <progress value="<%= pct %>" max="100" aria-label="Progress"><%= pct %>%</progress>
+  <span><%= pct %>%</span>
+</div>

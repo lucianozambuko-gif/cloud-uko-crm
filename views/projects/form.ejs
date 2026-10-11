@@ -17,23 +17,44 @@
     <label>Type
       <input type="text" name="type" value="<%= project.type || '' %>" maxlength="60" placeholder="Website, POS, E-commerce ...">
     </label>
-    <label>Status
-      <select name="status">
-        <% for (const s of statuses) { %>
-          <option value="<%= s %>" <%= s === project.status ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
+    <label>Stage
+      <select name="stage">
+        <% for (const s of stages) { %>
+          <option value="<%= s.key %>" <%= s.key === project.stage ? 'selected' : '' %>><%= s.label %></option>
         <% } %>
       </select>
     </label>
-    <label>Website or domain
-      <input type="text" name="url" value="<%= project.url || '' %>" maxlength="200">
+    <label>Start date
+      <input type="date" name="start_date" value="<%= project.start_date || '' %>">
+    </label>
+    <label>Target go-live date
+      <input type="date" name="target_date" value="<%= project.target_date || '' %>">
+    </label>
+    <label>Demo site link
+      <input type="text" name="demo_url" value="<%= project.demo_url || '' %>" maxlength="200" placeholder="demo.example.com" inputmode="url">
+    </label>
+    <label>Live site link (final production address)
+      <input type="text" name="url" value="<%= project.url || '' %>" maxlength="200" placeholder="example.co.za" inputmode="url">
+    </label>
+    <label>Project is
+      <select name="state">
+        <% for (const s of states) { %>
+          <option value="<%= s %>" <%= s === project.state ? 'selected' : '' %>><%= s.charAt(0).toUpperCase() + s.slice(1) %></option>
+        <% } %>
+      </select>
     </label>
   </div>
-  <label>Notes (hosting, database, logins location ...)
+  <% if (isNew) { %>
+    <label class="check-label">
+      <input type="checkbox" name="checklist" value="1" checked> Start with the standard checklist (edit it under Settings)
+    </label>
+  <% } %>
+  <label>Notes (hosting, database, where the logins are kept ...)
     <textarea name="notes" rows="4"><%= project.notes || '' %></textarea>
   </label>
   <div class="actions">
     <button class="btn primary" type="submit">Save project</button>
-    <a class="btn ghost" href="<%= project.client_id ? '/clients/' + project.client_id : '/projects' %>">Cancel</a>
+    <a class="btn ghost" href="<%= project.id ? '/projects/' + project.id : '/projects' %>">Cancel</a>
   </div>
 </form>
 <%- include('../partials/foot') %>

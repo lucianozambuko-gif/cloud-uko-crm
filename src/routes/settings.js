@@ -3,6 +3,7 @@ const { get, run } = require('../db');
 const v = require('../lib/validate');
 const { DEFAULTS, saveSettings } = require('../lib/settings');
 const { runAutomation } = require('../services/automation');
+const { parseChecklist } = require('../lib/projects');
 const { hashPassword, verifyPassword } = require('../lib/password');
 const { validatePassword } = require('./auth');
 
@@ -34,9 +35,11 @@ router.post('/', async (req, res) => {
     renewal_reminder_days: v.str(b.renewal_reminder_days, 4),
     overdue_followup_days: v.str(b.overdue_followup_days, 4),
     quote_followup_days: v.str(b.quote_followup_days, 4),
+    demo_followup_days: v.str(b.demo_followup_days, 4),
+    project_checklist: v.text(b.project_checklist, 6000),
   };
   // A blank message template goes back to the built-in wording.
-  for (const key of ['wa_invoice', 'wa_reminder', 'wa_receipt', 'wa_quote']) values[key] = v.text(b[key], 1000) || DEFAULTS[key];
+  for (const key of ['wa_invoice', 'wa_reminder', 'wa_receipt', 'wa_quote', 'wa_demo', 'wa_live']) values[key] = v.text(b[key], 1000) || DEFAULTS[key];
 
   const errors = [];
   const rate = Number(values.vat_rate);
@@ -52,9 +55,10 @@ router.post('/', async (req, res) => {
     if (!/^\d{1,3}$/.test(values[key])) errors.push('Payment terms and quote validity must be a number of days.');
   }
   if (!['off', 'draft', 'sent'].includes(values.auto_invoice_mode)) errors.push('Choose how recurring invoices are created.');
-  for (const key of ['renewal_reminder_days', 'overdue_followup_days', 'quote_followup_days']) {
+  for (const key of ['renewal_reminder_days', 'overdue_followup_days', 'quote_followup_days', 'demo_followup_days']) {
     if (!/^\d{1,3}$/.test(values[key])) errors.push('Automation day counts must be whole numbers (0 switches a rule off).');
   }
+  errors.push(...parseChecklist(values.project_checklist).errors.slice(0, 5));
   if (errors.length) return res.status(400).render('settings', { title: 'Settings', values, errors: [...new Set(errors)] });
 
   await saveSettings(values);

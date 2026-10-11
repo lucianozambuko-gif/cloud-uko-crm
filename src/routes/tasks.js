@@ -7,11 +7,13 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   const [open, done, clients] = await Promise.all([
-    all(`SELECT t.*, c.name AS client_name, d.number AS doc_number, d.kind AS doc_kind FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
-         LEFT JOIN documents d ON d.id = t.document_id
+    all(`SELECT t.*, c.name AS client_name, d.number AS doc_number, d.kind AS doc_kind, pr.name AS project_name
+         FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
+         LEFT JOIN documents d ON d.id = t.document_id LEFT JOIN projects pr ON pr.id = t.project_id
          WHERE t.done_at IS NULL ORDER BY t.due_date IS NULL, t.due_date, t.id`),
-    all(`SELECT t.*, c.name AS client_name, d.number AS doc_number, d.kind AS doc_kind FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
-         LEFT JOIN documents d ON d.id = t.document_id
+    all(`SELECT t.*, c.name AS client_name, d.number AS doc_number, d.kind AS doc_kind, pr.name AS project_name
+         FROM tasks t LEFT JOIN clients c ON c.id = t.client_id
+         LEFT JOIN documents d ON d.id = t.document_id LEFT JOIN projects pr ON pr.id = t.project_id
          WHERE t.done_at IS NOT NULL ORDER BY t.done_at DESC LIMIT 20`),
     all('SELECT id, name FROM clients WHERE archived = 0 ORDER BY name COLLATE NOCASE'),
   ]);
@@ -33,7 +35,11 @@ router.post('/', async (req, res) => {
     return res.redirect(back);
   }
 
-  await run('INSERT INTO tasks (client_id, title, due_date) VALUES (?, ?, ?)', [clientId, title, due || null]);
+  // A task added from a project page is linked to that project (ignored if it is not this client's project).
+  const projectId = v.id(req.body.project_id);
+  const project = projectId && (await get('SELECT id FROM projects WHERE id = ? AND client_id = ?', [projectId, clientId]));
+  await run('INSERT INTO tasks (client_id, project_id, title, due_date) VALUES (?, ?, ?, ?)',
+    [clientId, project ? project.id : null, title, due || null]);
   v.flash(req, 'ok', 'Task added.');
   res.redirect(back);
 });

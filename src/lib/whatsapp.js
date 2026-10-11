@@ -1,4 +1,5 @@
 const { money, fmtDate } = require('./format');
+const { href: projectHref } = require('./projects');
 
 // wa.me needs the full international number without "+". Local 0... numbers are assumed to be South African.
 function number(phone) {
@@ -54,4 +55,24 @@ function documentButtons({ doc, client, settings }) {
   }));
 }
 
-module.exports = { number, link, fill, documentMessage, documentButtons };
+// Buttons for a project: send the demo link while it is being reviewed, the live link once it is live.
+// project needs client_name and client_phone (PROJECT_SELECT provides them).
+function projectButtons({ project, settings }) {
+  const options = [];
+  const demo = projectHref(project.demo_url);
+  const live = projectHref(project.url);
+  if (demo && project.stage !== 'live') options.push(['demo', 'WhatsApp demo link', demo]);
+  if (live && project.stage === 'live') options.push(['live', 'WhatsApp live link', live]);
+  return options.map(([type, label, url]) => ({
+    type,
+    label,
+    href: link(project.client_phone, fill(settings[`wa_${type}`], {
+      name: project.client_name,
+      project: project.name,
+      link: url,
+      business: settings.business_name,
+    })),
+  }));
+}
+
+module.exports = { number, link, fill, documentMessage, documentButtons, projectButtons };

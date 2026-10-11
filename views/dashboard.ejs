@@ -40,6 +40,33 @@
   <% } %>
 </section>
 
+<section class="card">
+  <div class="card-head">
+    <h2>Projects in progress</h2>
+    <a class="btn small" href="/projects/new">New project</a>
+  </div>
+  <% if (!projects.length) { %>
+    <p class="muted">Nothing in progress. <a href="/projects?view=live">See live projects</a></p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Project</th><th>Client</th><th>Stage</th><th>Progress</th><th>Target</th></tr></thead>
+      <tbody>
+      <% for (const p of projects) { %>
+        <tr>
+          <td><a href="/projects/<%= p.id %>"><%= p.name %></a></td>
+          <td><a href="/clients/<%= p.client_id %>"><%= p.client_name %></a></td>
+          <td><%- include('partials/stage-badge', { p }) %></td>
+          <td><%- include('partials/progress', { p }) %></td>
+          <td class="<%= p.target_date && p.target_date < today ? 'late' : '' %>"><%= p.target_date ? f.fmtDate(p.target_date) : '' %></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</section>
+
 <div class="two-col">
   <section class="card">
     <h2>Recurring billing due in the next 30 days</h2>

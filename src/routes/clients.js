@@ -3,6 +3,7 @@ const { get, all, run } = require('../db');
 const v = require('../lib/validate');
 const { today } = require('../lib/format');
 const { DOC_SELECT } = require('../services/documents');
+const { PROJECT_SELECT } = require('../services/projects');
 
 const router = express.Router();
 
@@ -67,9 +68,10 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const client = await loadClient(req);
   const [projects, documents, tasks, recurring] = await Promise.all([
-    all('SELECT * FROM projects WHERE client_id = ? ORDER BY status, name COLLATE NOCASE', [client.id]),
+    all(`${PROJECT_SELECT} WHERE p.client_id = ? ORDER BY p.state, p.name COLLATE NOCASE`, [client.id]),
     all(`${DOC_SELECT} WHERE d.client_id = ? ORDER BY d.issue_date DESC, d.number DESC`, [client.id]),
-    all(`SELECT t.*, d.number AS doc_number, d.kind AS doc_kind FROM tasks t LEFT JOIN documents d ON d.id = t.document_id
+    all(`SELECT t.*, d.number AS doc_number, d.kind AS doc_kind, pr.name AS project_name
+         FROM tasks t LEFT JOIN documents d ON d.id = t.document_id LEFT JOIN projects pr ON pr.id = t.project_id
          WHERE t.client_id = ? AND t.done_at IS NULL ORDER BY t.due_date IS NULL, t.due_date, t.id`, [client.id]),
     all('SELECT * FROM recurring WHERE client_id = ? ORDER BY active DESC, next_date', [client.id]),
   ]);
